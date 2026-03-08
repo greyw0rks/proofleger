@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+bots/
+bots/wallets.json
+bots/agent.js
+bots/worker.js
+*.json.bak
+contracts/proofleger-mainnet/
+*.js~
