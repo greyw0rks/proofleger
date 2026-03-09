@@ -105,6 +105,9 @@ function timeAgo(ts) {
 }
 
 export default function Dashboard() {
+  const [auth, setAuth] = useState(false);
+  const [pw, setPw] = useState("");
+  const [pwError, setPwError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [txs, setTxs] = useState([]);
   const [contractStats, setContractStats] = useState({});
@@ -195,6 +198,49 @@ export default function Dashboard() {
   }, []);
 
   const maxVol = Math.max(...totals.volume.map(v => v[1]), 1);
+
+  if (!auth) {
+    return (
+      <>
+        <style>{styles}</style>
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#080808" }}>
+          <div style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: 12, padding: "40px 48px", width: "100%", maxWidth: 360, textAlign: "center" }}>
+            <div style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: 28, letterSpacing: 3, color: "#fff", marginBottom: 8 }}>DASHBOARD</div>
+            <div style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: "#444", marginBottom: 32, letterSpacing: 1 }}>RESTRICTED ACCESS</div>
+            <input
+              type="password"
+              placeholder="Enter password"
+              value={pw}
+              onChange={e => { setPw(e.target.value); setPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (pw === process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD) {
+                    setAuth(true);
+                  } else {
+                    setPwError(true);
+                  }
+                }
+              }}
+              style={{ width: "100%", background: "#080808", border: `1px solid ${pwError ? "#ef4444" : "#1a1a1a"}`, borderRadius: 6, padding: "12px 14px", color: "#f0f0f0", fontFamily: "DM Mono, monospace", fontSize: 13, outline: "none", marginBottom: 12, letterSpacing: 1 }}
+            />
+            {pwError && <div style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: "#ef4444", marginBottom: 12 }}>Wrong password</div>}
+            <button
+              onClick={() => {
+                if (pw === process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD) {
+                  setAuth(true);
+                } else {
+                  setPwError(true);
+                }
+              }}
+              style={{ width: "100%", padding: "12px", background: "#F7931A", border: "none", borderRadius: 6, color: "#000", fontFamily: "DM Sans, sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 1 }}
+            >
+              Enter
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
