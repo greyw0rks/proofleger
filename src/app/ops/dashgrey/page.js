@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 const CONTRACT_ADDRESS = "SP1SY1E599GN04XRD2DQBKV7E62HYBJR2CT9S5QKK";
 const CONTRACTS = ["proofleger3", "credentials", "achievements"];
 const API = "https://api.hiro.so";
+
+const TIME_RANGES = [
+  { label: "7D", days: 7 },
+  { label: "2W", days: 14 },
+  { label: "3W", days: 21 },
+  { label: "1M", days: 30 },
+];
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
@@ -23,7 +30,12 @@ const styles = `
   .stat-value { font-size: 36px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
   .stat-sub { font-size: 11px; font-family: 'Space Mono', monospace; color: #444; margin-top: 6px; }
   .section { margin-bottom: 40px; }
-  .section-title { font-size: 10px; font-family: 'Space Mono', monospace; color: #F7931A; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #1e1e1e; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #1e1e1e; }
+  .section-title { font-size: 10px; font-family: 'Space Mono', monospace; color: #F7931A; text-transform: uppercase; letter-spacing: 2px; }
+  .range-switcher { display: flex; gap: 6px; }
+  .range-btn { background: transparent; border: 1px solid #1e1e1e; color: #666; padding: 4px 10px; border-radius: 6px; font-family: 'Space Mono', monospace; font-size: 10px; cursor: pointer; transition: all 0.2s; }
+  .range-btn:hover { border-color: #F7931A; color: #F7931A; }
+  .range-btn.active { border-color: #F7931A; color: #F7931A; background: rgba(247,147,26,0.08); }
   .contract-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .contract-card { background: #111111; border: 1px solid #1e1e1e; border-radius: 12px; padding: 20px; }
   .contract-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
@@ -51,11 +63,10 @@ const styles = `
   .wallet-stat { text-align: right; }
   .wallet-stat-value { font-size: 13px; font-weight: 700; color: #F7931A; }
   .wallet-stat-label { font-size: 9px; font-family: 'Space Mono', monospace; color: #444; text-transform: uppercase; }
-  .bar-wrap { background: #0d0d0d; border-radius: 8px; height: 120px; display: flex; align-items: flex-end; gap: 4px; padding: 8px; }
-  .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; }
+  .bar-wrap { background: #0d0d0d; border-radius: 8px; height: 120px; display: flex; align-items: flex-end; gap: 2px; padding: 8px; overflow: hidden; }
+  .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; min-width: 0; }
   .bar { background: #F7931A; border-radius: 4px 4px 0 0; width: 100%; transition: height 0.5s ease; min-height: 2px; }
-  .bar-label { font-size: 8px; font-family: 'Space Mono', monospace; color: #444; }
-  .chart-row { display: flex; justify-content: space-between; align-items: flex-end; height: 100%; width: 100%; }
+  .bar-label { font-size: 7px; font-family: 'Space Mono', monospace; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .loading { text-align: center; padding: 80px; color: #666; font-family: 'Space Mono', monospace; }
   .refresh-btn { background: transparent; border: 1px solid #1e1e1e; color: #666; padding: 8px 16px; border-radius: 8px; font-family: 'Space Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; }
   .refresh-btn:hover { border-color: #F7931A; color: #F7931A; }
@@ -75,7 +86,6 @@ function getBadgeClass(fnName) {
   if (fnName.includes("mint")) return "badge badge-mint";
   return "badge badge-other";
 }
-
 function getFnLabel(fnName) {
   if (!fnName) return "unknown";
   if (fnName.includes("store")) return "Anchor";
@@ -83,16 +93,13 @@ function getFnLabel(fnName) {
   if (fnName.includes("mint")) return "Mint NFT";
   return fnName;
 }
-
 function microToSTX(micro) {
   return (Number(micro) / 1_000_000).toFixed(4);
 }
-
 function shortAddr(addr) {
   if (!addr) return "";
   return addr.slice(0, 8) + "..." + addr.slice(-6);
 }
-
 function timeAgo(ts) {
   const diff = Date.now() - new Date(ts).getTime();
   const mins = Math.floor(diff / 60000);
@@ -102,6 +109,23 @@ function timeAgo(ts) {
   if (hrs > 0) return hrs + "h ago";
   if (mins > 0) return mins + "m ago";
   return "just now";
+}
+
+async function fetchAllTxsForContract(contractName) {
+  const allResults = [];
+  let offset = 0;
+  const limit = 50;
+  while (true) {
+    const url = `${API}/extended/v1/address/${CONTRACT_ADDRESS}.${contractName}/transactions?limit=${limit}&offset=${offset}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const results = data.results || [];
+    allResults.push(...results);
+    if (results.length < limit) break;
+    offset += limit;
+    if (offset >= 500) break;
+  }
+  return allResults;
 }
 
 export default function Dashboard() {
@@ -114,8 +138,9 @@ export default function Dashboard() {
   const [walletStats, setWalletStats] = useState([]);
   const [totals, setTotals] = useState({ txCount: 0, totalFees: 0, uniqueWallets: 0, volume: [] });
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [rangeDays, setRangeDays] = useState(14);
 
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const allTxs = [];
@@ -123,29 +148,21 @@ export default function Dashboard() {
       const walletMap = {};
 
       for (const name of CONTRACTS) {
-        const url = `${API}/extended/v1/address/${CONTRACT_ADDRESS}.${name}/transactions?limit=50`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const results = data.results || [];
-
+        const results = await fetchAllTxsForContract(name);
         let txCount = 0;
         let totalFees = 0;
-
         for (const tx of results) {
           if (tx.tx_status !== "success") continue;
           txCount++;
           totalFees += Number(tx.fee_rate || 0);
-
           const sender = tx.sender_address;
           if (!walletMap[sender]) walletMap[sender] = { txCount: 0, totalFees: 0, anchors: 0, attests: 0, mints: 0 };
           walletMap[sender].txCount++;
           walletMap[sender].totalFees += Number(tx.fee_rate || 0);
-
           const fnName = tx.contract_call?.function_name || "";
           if (fnName.includes("store")) walletMap[sender].anchors++;
           if (fnName.includes("attest")) walletMap[sender].attests++;
           if (fnName.includes("mint")) walletMap[sender].mints++;
-
           allTxs.push({
             txid: tx.tx_id,
             sender: tx.sender_address,
@@ -156,7 +173,6 @@ export default function Dashboard() {
             ts: tx.burn_block_time_iso || tx.parent_burn_block_time_iso,
           });
         }
-
         stats[name] = { txCount, totalFees };
       }
 
@@ -169,33 +185,42 @@ export default function Dashboard() {
 
       const totalFees = Object.values(stats).reduce((s, c) => s + c.totalFees, 0);
       const totalTxs = Object.values(stats).reduce((s, c) => s + c.txCount, 0);
+      const uniqueWallets = Object.keys(walletMap).length;
 
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - rangeDays);
       const volumeMap = {};
+      for (let d = 0; d < rangeDays; d++) {
+        const date = new Date();
+        date.setDate(date.getDate() - (rangeDays - 1 - d));
+        const key = date.toISOString().slice(0, 10);
+        volumeMap[key] = 0;
+      }
       for (const tx of allTxs) {
         if (!tx.ts) continue;
         const day = tx.ts.slice(0, 10);
-        volumeMap[day] = (volumeMap[day] || 0) + 1;
+        if (volumeMap[day] !== undefined) {
+          volumeMap[day]++;
+        }
       }
-      const volume = Object.entries(volumeMap)
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .slice(-14);
+      const volume = Object.entries(volumeMap).sort((a, b) => a[0].localeCompare(b[0]));
 
       setTxs(allTxs.slice(0, 30));
       setContractStats(stats);
       setWalletStats(walletList);
-      setTotals({ txCount: totalTxs, totalFees, uniqueWallets: walletList.length, volume });
+      setTotals({ txCount: totalTxs, totalFees, uniqueWallets, volume });
       setLastUpdated(new Date());
     } catch (e) {
       console.error("Dashboard fetch error:", e);
     }
     setLoading(false);
-  }
+  }, [rangeDays]);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
 
   const maxVol = Math.max(...totals.volume.map(v => v[1]), 1);
 
@@ -214,28 +239,16 @@ export default function Dashboard() {
               onChange={e => { setPw(e.target.value); setPwError(false); }}
               onKeyDown={e => {
                 if (e.key === "Enter") {
-                  if (pw === process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD) {
-                    setAuth(true);
-                  } else {
-                    setPwError(true);
-                  }
+                  if (pw === process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD) { setAuth(true); } else { setPwError(true); }
                 }
               }}
               style={{ width: "100%", background: "#080808", border: `1px solid ${pwError ? "#ef4444" : "#1a1a1a"}`, borderRadius: 6, padding: "12px 14px", color: "#f0f0f0", fontFamily: "DM Mono, monospace", fontSize: 13, outline: "none", marginBottom: 12, letterSpacing: 1 }}
             />
             {pwError && <div style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: "#ef4444", marginBottom: 12 }}>Wrong password</div>}
             <button
-              onClick={() => {
-                if (pw === process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD) {
-                  setAuth(true);
-                } else {
-                  setPwError(true);
-                }
-              }}
+              onClick={() => { if (pw === process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD) { setAuth(true); } else { setPwError(true); } }}
               style={{ width: "100%", padding: "12px", background: "#F7931A", border: "none", borderRadius: 6, color: "#000", fontFamily: "DM Sans, sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 1 }}
-            >
-              Enter
-            </button>
+            >Enter</button>
           </div>
         </div>
       </>
@@ -249,21 +262,14 @@ export default function Dashboard() {
         <div className="header">
           <div>
             <div className="title">Protocol Dashboard</div>
-            <div className="subtitle">
-              {CONTRACT_ADDRESS.slice(0, 10)}...{CONTRACT_ADDRESS.slice(-6)} · Stacks Mainnet
-            </div>
+            <div className="subtitle">{CONTRACT_ADDRESS.slice(0, 10)}...{CONTRACT_ADDRESS.slice(-6)} · Stacks Mainnet</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {lastUpdated && (
-              <div className="live-label">
-                <span className="live-dot" />
-                Updated {timeAgo(lastUpdated)}
-              </div>
+              <div className="live-label"><span className="live-dot" />Updated {timeAgo(lastUpdated)}</div>
             )}
             <button className="refresh-btn" onClick={fetchData}>Refresh</button>
-            <a href="/" style={{ textDecoration: "none" }}>
-              <button className="refresh-btn">← App</button>
-            </a>
+            <a href="/" style={{ textDecoration: "none" }}><button className="refresh-btn">← App</button></a>
           </div>
         </div>
 
@@ -298,15 +304,22 @@ export default function Dashboard() {
 
             {totals.volume.length > 0 && (
               <div className="section">
-                <div className="section-title">Transaction Volume (Last 14 Days)</div>
+                <div className="section-header">
+                  <div className="section-title">Transaction Volume</div>
+                  <div className="range-switcher">
+                    {TIME_RANGES.map(r => (
+                      <button
+                        key={r.label}
+                        className={`range-btn${rangeDays === r.days ? " active" : ""}`}
+                        onClick={() => setRangeDays(r.days)}
+                      >{r.label}</button>
+                    ))}
+                  </div>
+                </div>
                 <div className="bar-wrap">
                   {totals.volume.map(([day, count], i) => (
                     <div key={i} className="bar-col">
-                      <div
-                        className="bar"
-                        style={{ height: Math.max((count / maxVol) * 90, 4) + "px" }}
-                        title={`${day}: ${count} txs`}
-                      />
+                      <div className="bar" style={{ height: Math.max((count / maxVol) * 90, count > 0 ? 4 : 2) + "px" }} title={`${day}: ${count} txs`} />
                       <div className="bar-label">{day.slice(5)}</div>
                     </div>
                   ))}
@@ -315,7 +328,7 @@ export default function Dashboard() {
             )}
 
             <div className="section">
-              <div className="section-title">Contract Breakdown</div>
+              <div className="section-header"><div className="section-title">Contract Breakdown</div></div>
               <div className="contract-grid">
                 {CONTRACTS.map((name) => {
                   const s = contractStats[name] || { txCount: 0, totalFees: 0 };
@@ -323,20 +336,9 @@ export default function Dashboard() {
                     <div key={name} className="contract-card">
                       <div className="contract-name">{name}</div>
                       <div className="contract-addr">{CONTRACT_ADDRESS}.{name}</div>
-                      <div className="contract-stat">
-                        <div className="contract-stat-label">Transactions</div>
-                        <div className="contract-stat-value">{s.txCount}</div>
-                      </div>
-                      <div className="contract-stat">
-                        <div className="contract-stat-label">Fees Collected</div>
-                        <div className="contract-stat-value">{microToSTX(s.totalFees)} STX</div>
-                      </div>
-                      <div className="contract-stat">
-                        <div className="contract-stat-label">Avg Fee</div>
-                        <div className="contract-stat-value">
-                          {s.txCount > 0 ? microToSTX(s.totalFees / s.txCount) : "0.0000"} STX
-                        </div>
-                      </div>
+                      <div className="contract-stat"><div className="contract-stat-label">Transactions</div><div className="contract-stat-value">{s.txCount}</div></div>
+                      <div className="contract-stat"><div className="contract-stat-label">Fees Collected</div><div className="contract-stat-value">{microToSTX(s.totalFees)} STX</div></div>
+                      <div className="contract-stat"><div className="contract-stat-label">Avg Fee</div><div className="contract-stat-value">{s.txCount > 0 ? microToSTX(s.totalFees / s.txCount) : "0.0000"} STX</div></div>
                     </div>
                   );
                 })}
@@ -344,33 +346,23 @@ export default function Dashboard() {
             </div>
 
             <div className="section">
-              <div className="section-title">Most Active Wallets</div>
+              <div className="section-header"><div className="section-title">Most Active Wallets</div></div>
               <div className="wallets-list">
-                {walletStats.length === 0 && (
-                  <div style={{ color: "#444", fontFamily: "Space Mono", fontSize: 12, padding: 20 }}>No wallet data yet</div>
-                )}
+                {walletStats.length === 0 && <div style={{ color: "#444", fontFamily: "Space Mono", fontSize: 12, padding: 20 }}>No wallet data yet</div>}
                 {walletStats.map((w, i) => (
                   <div key={i} className="wallet-row">
                     <div>
                       <div className="wallet-addr">
                         <span style={{ color: "#F7931A", marginRight: 10 }}>#{i + 1}</span>
-                        <a href={`/profile/${w.addr}`} style={{ color: "#e8e8e8", textDecoration: "none" }}>
-                          {shortAddr(w.addr)}
-                        </a>
+                        <a href={`/profile/${w.addr}`} style={{ color: "#e8e8e8", textDecoration: "none" }}>{shortAddr(w.addr)}</a>
                       </div>
                       <div style={{ fontSize: 10, fontFamily: "Space Mono", color: "#444", marginTop: 4 }}>
                         {w.anchors} anchors · {w.attests} attests · {w.mints} mints
                       </div>
                     </div>
                     <div className="wallet-stats">
-                      <div className="wallet-stat">
-                        <div className="wallet-stat-value">{w.txCount}</div>
-                        <div className="wallet-stat-label">Txs</div>
-                      </div>
-                      <div className="wallet-stat">
-                        <div className="wallet-stat-value">{microToSTX(w.totalFees)}</div>
-                        <div className="wallet-stat-label">STX Fees</div>
-                      </div>
+                      <div className="wallet-stat"><div className="wallet-stat-value">{w.txCount}</div><div className="wallet-stat-label">Txs</div></div>
+                      <div className="wallet-stat"><div className="wallet-stat-value">{microToSTX(w.totalFees)}</div><div className="wallet-stat-label">STX Fees</div></div>
                     </div>
                   </div>
                 ))}
@@ -378,62 +370,34 @@ export default function Dashboard() {
             </div>
 
             <div className="section">
-              <div className="section-title">Recent Transactions</div>
+              <div className="section-header"><div className="section-title">Recent Transactions</div></div>
               <table className="tx-table">
                 <thead>
                   <tr>
-                    <th>Type</th>
-                    <th>Contract</th>
-                    <th>Sender</th>
-                    <th>Fee (STX)</th>
-                    <th>Block</th>
-                    <th>Time</th>
-                    <th>TX</th>
+                    <th>Type</th><th>Contract</th><th>Sender</th><th>Fee (STX)</th><th>Block</th><th>Time</th><th>TX</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {txs.length === 0 && (
-                    <tr>
-                      <td colSpan={7} style={{ color: "#444", textAlign: "center", padding: 30 }}>No transactions yet</td>
-                    </tr>
-                  )}
+                  {txs.length === 0 && <tr><td colSpan={7} style={{ color: "#444", textAlign: "center", padding: 30 }}>No transactions yet</td></tr>}
                   {txs.map((tx, i) => (
                     <tr key={i}>
                       <td><span className={getBadgeClass(tx.fn)}>{getFnLabel(tx.fn)}</span></td>
                       <td style={{ color: "#666" }}>{tx.contract}</td>
-                      <td>
-                        <a href={`/profile/${tx.sender}`} style={{ color: "#e8e8e8", textDecoration: "none" }}>
-                          {shortAddr(tx.sender)}
-                        </a>
-                      </td>
+                      <td><a href={`/profile/${tx.sender}`} style={{ color: "#e8e8e8", textDecoration: "none" }}>{shortAddr(tx.sender)}</a></td>
                       <td style={{ color: "#F7931A" }}>{microToSTX(tx.fee)}</td>
-                      <td style={{ color: "#666" }}>{tx.block ? "#" + tx.block.toLocaleString() : "-"}</td>
-                      <td style={{ color: "#444" }}>{tx.ts ? timeAgo(tx.ts) : "-"}</td>
-                      <td>
-                        
-                          <a href={"https://explorer.hiro.so/txid/" + tx.txid + ""}
-                          target="_blank"
-                          className="tx-link"
-                        >
-                          {tx.txid.slice(0, 8)}...
-                        </a>
-                      </td>
+                      <td style={{ color: "#444" }}>#{tx.block?.toLocaleString()}</td>
+                      <td style={{ color: "#444" }}>{timeAgo(tx.ts)}</td>
+                      <td><a href={`https://explorer.hiro.so/txid/${tx.txid}`} target="_blank" rel="noreferrer" className="tx-link">0x{tx.txid?.slice(2, 8)}...</a></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-
-            <div style={{ marginTop: 40, padding: "20px 0", borderTop: "1px solid #1e1e1e", display: "flex", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 11, fontFamily: "Space Mono", color: "#444" }}>
-                ProofLedger Protocol · Stacks Mainnet · Auto-refreshes every 60s
-              </div>
-              <div style={{ fontSize: 11, fontFamily: "Space Mono", color: "#444" }}>
-                {lastUpdated ? lastUpdated.toLocaleTimeString() : ""}
-              </div>
-            </div>
           </>
         )}
+        <div style={{ textAlign: "center", marginTop: 60, fontFamily: "Space Mono", fontSize: 10, color: "#333" }}>
+          ProofLedger Protocol · Stacks Mainnet · Auto-refreshes every 60s · {lastUpdated?.toLocaleTimeString()}
+        </div>
       </div>
     </>
   );
