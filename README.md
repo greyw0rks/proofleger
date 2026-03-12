@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# ProofLedger
 
-## Getting Started
+**Anchor documents to Bitcoin. Prove existence without revealing content.**
 
-First, run the development server:
+ProofLedger lets you compute a SHA-256 hash of any document client-side, then anchor that hash permanently to the Bitcoin blockchain via Stacks. No file is ever uploaded. The proof lives on-chain forever.
+
+Live: [proofleger.vercel.app](https://proofleger.vercel.app)
+
+---
+
+## What it does
+
+- Anchor any document hash to Bitcoin via Stacks
+- Verify a document existed at a specific block height
+- Attest to documents anchored by others
+- Mint soulbound NFT achievements for verified credentials
+- Build an on-chain reputation score from your verified documents
+- Share a public proof profile at `/profile/[wallet]`
+- Export a decentralized CV at `/cv/[wallet]`
+
+---
+
+## Tech Stack
+
+- Next.js 16 (App Router)
+- @stacks/connect v8 for wallet integration
+- @stacks/transactions for contract calls
+- Clarity smart contracts on Stacks mainnet
+- Bitcoin-anchored finality
+
+---
+
+## Contracts (Mainnet)
+
+| Contract | Address |
+|---|---|
+| proofleger3 | SP1SY1E599GN04XRD2DQBKV7E62HYBJR2CT9S5QKK.proofleger3 |
+| credentials | SP1SY1E599GN04XRD2DQBKV7E62HYBJR2CT9S5QKK.credentials |
+| achievements | SP1SY1E599GN04XRD2DQBKV7E62HYBJR2CT9S5QKK.achievements |
+
+---
+
+## UI Design - Neo-Brutalist
+
+| Token | Value |
+|---|---|
+| Background | `#0a0a0a` |
+| Foreground | `#f5f0e8` |
+| Accent | `#F7931A` (Bitcoin orange) |
+| Success | `#00ff88` |
+| Error | `#ff3333` |
+| Border | `3px solid` with `6px 6px 0px` hard shadows |
+| Heading font | Archivo Black |
+| Body font | Space Grotesk |
+| Mono font | Space Mono |
+
+---
+
+## Local Development
 
 ```bash
+git clone https://github.com/greyw0rks/proofleger.git
+cd proofleger
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires Hiro Wallet browser extension.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+src/
+  app/
+    page.js                   # Main app (Anchor, Verify, My Records)
+    profile/[wallet]/page.js  # Public proof profile
+    cv/[wallet]/page.js       # Decentralized CV
+  components/
+    WalletButton.jsx          # Hiro wallet connect
+    ErrorBoundary.jsx         # Runtime error handling
+    SkeletonCard.jsx          # Loading skeletons
+  lib/
+    wallet.js                 # All blockchain interactions
+  utils/
+    formatters.js             # Display formatting helpers
+    validators.js             # Input validation
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) · [SECURITY.md](./SECURITY.md) · [ROADMAP.md](./ROADMAP.md)
