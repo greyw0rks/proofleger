@@ -1,8 +1,11 @@
 {
-  "name": "proofleger",
-  "version": "0.1.1",
+  "name": "@greyw0rks/proofleger",
+  "version": "0.1.2",
   "description": "A Web3 proof and identity ledger built on Stacks",
-  "author": "greyw0rks",
+  "author": {
+    "name": "greyw0rks",
+    "url": "https://github.com/greyw0rks"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/greyw0rks/proofleger.git"
@@ -14,38 +17,55 @@
     "web3",
     "identity",
     "proof",
-    "ledger",
-    "nextjs"
+    "ledger"
   ],
+  "license": "MIT",
   "private": false,
+
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+
+  "files": [
+    "dist"
+  ],
+
   "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "next dev",
-    "build": "next build",
     "start": "next start",
     "lint": "eslint ."
   },
+
   "engines": {
     "node": ">=18"
   },
+
   "dependencies": {
     "@stacks/auth": "^7.3.1",
     "@stacks/connect": "^8.2.5",
     "@stacks/network": "^7.3.1",
     "@stacks/transactions": "^7.3.1",
     "@stacks/wallet-sdk": "^7.2.0",
+<<<<<<< HEAD
     "bip39": "^3.1.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "viem": "^2.0.0",
     "wagmi": "^2.0.0"
+=======
+    "bip39": "^3.1.0"
+>>>>>>> 37b30131 (Update package name and version in package.json)
   },
+
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4"
-  },
-  "license": "MIT"
+    "tailwindcss": "^4",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
 }
