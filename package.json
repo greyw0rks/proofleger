@@ -1,34 +1,29 @@
 {
   "name": "@greyw0rks/proofleger",
   "version": "0.1.4",
-  "description": "A Web3 proof and identity ledger built on Stacks",
-  "author": {
-    "name": "greyw0rks",
-    "url": "https://github.com/greyw0rks"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/greyw0rks/proofleger.git"
-  },
-  "homepage": "https://github.com/greyw0rks/proofleger#readme",
-  "keywords": [
-    "stacks",
-    "bitcoin",
-    "web3",
-    "identity",
-    "proof",
-    "ledger"
-  ],
-
-  
-  "license": "MIT",
-  "main": "dist/index.cjs",
+  "description": "A Web3 proof and identity ledger",
+  "main": "dist/index.js",
   "module": "dist/index.js",
   "files": ["dist"],
   "bin": {
     "proofleger": "dist/index.js"
-  }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "stacks",
+    "bitcoin",
+    "web3",
+    "proof",
+    "identity",
+    "ledger"
+  ],
+  "author": "greyw0rks",
+  "license": "MIT"
+}
 
+  
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "next dev",
