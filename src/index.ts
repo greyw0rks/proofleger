@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+
+console.log("Proofleger CLI running");
+
 // Core protocol logic
 export * from './lib';
 
