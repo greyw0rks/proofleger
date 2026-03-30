@@ -1,6 +1,6 @@
 {
   "name": "@greyw0rks/proofleger",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "A Web3 proof and identity ledger built on Stacks",
   "author": {
     "name": "greyw0rks",
@@ -28,10 +28,6 @@
   "bin": {
     "proofleger": "dist/index.js"
   }
-
-  "bin": {
-  "proofleger": "dist/index.js"
-}
 
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
