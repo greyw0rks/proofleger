@@ -19,6 +19,10 @@
     "proof",
     "ledger"
   ],
+
+  #!/usr/bin/env node
+console.log("Proofleger CLI running");
+  
   "license": "MIT",
   "private": false,
 
@@ -29,6 +33,10 @@
   "files": [
     "dist"
   ],
+
+  "bin": {
+  "proofleger": "dist/index.js"
+}
 
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
