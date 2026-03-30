@@ -9,7 +9,7 @@
     "proofleger": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsup src/index.ts --format cjs,esm --dts"
   },
   "keywords": [
     "stacks",
@@ -20,21 +20,10 @@
     "ledger"
   ],
   "author": "greyw0rks",
-  "license": "MIT"
-}
-
-  
-  "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
-    "dev": "next dev",
-    "start": "next start",
-    "lint": "eslint ."
-  },
-
+  "license": "MIT",
   "engines": {
     "node": ">=18"
   },
-
   "dependencies": {
     "@stacks/auth": "^7.3.1",
     "@stacks/connect": "^8.2.5",
@@ -52,13 +41,7 @@
     "bip39": "^3.1.0"
 >>>>>>> 37b30131 (Update package name and version in package.json)
   },
-
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0"
   }
