@@ -1,0 +1,9 @@
+{
+  "name": "proofleger-celo",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
+    "hardhat": "^2.22.0"
+  }
+}
