@@ -7,8 +7,8 @@
  */
 
 // ─── Update these after deployment ──────────────────────────
-export const CELO_CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000";
-export const CELO_CREDENTIALS_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const CELO_CONTRACT_ADDRESS = "0x251B3302c0CcB1cFBeb0cda3dE06C2D312a41735";
+export const CELO_CREDENTIALS_ADDRESS = "0xe27c611327f788F4fee1bE5A32fD4650F04E09Ee";
 export const CELO_CHAIN_ID = 42220;
 export const CELO_RPC = "https://feth.celo.org";
 export const CELO_EXPLORER = "https://celoscan.io";
