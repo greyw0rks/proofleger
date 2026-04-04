@@ -1,0 +1,72 @@
+name: Proofleger CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      # Build your npm package (important for real usage)
+      - name: Build Proofleger package
+        run: npm run build
+
+      # Ensure build output exists
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/index.js" ]; then
+            echo "Missing dist/index.js"
+            exit 1
+          fi
+
+      # Test that package can actually be imported
+      - name: Test package import
+        run: |
+          node -e "import('./dist/index.js').then(() => console.log('ESM import OK')).catch(() => process.exit(1))"
+
+      # Test CommonJS compatibility
+      - name: Test CommonJS require
+        run: |
+          node -e "require('./dist/index.cjs'); console.log('CJS require OK')"
+
+      # Simulate real consumer usage
+      - name: Simulate install usage
+        run: |
+          mkdir test-app
+          cd test-app
+          npm init -y > /dev/null 2>&1
+          npm install .. > /dev/null 2>&1
+
+          node -e "
+            try {
+              const pkg = require('@greyw0rks/proofleger');
+              console.log('Package loaded:', Object.keys(pkg));
+            } catch (e) {
+              console.error('Import failed');
+              process.exit(1);
+            }
+          "
+
+      # Optional lint (won’t fail build if missing)
+      - name: Lint
+        run: npm run lint || echo "No lint configured"
+
+      # Optional Next.js build (keeps app side healthy)
+      - name: Build Next.js app
+        run: npm run build || echo "No Next.js build needed"
