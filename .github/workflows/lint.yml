@@ -1,0 +1,22 @@
+name: Lint
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint --if-present
+      - name: Check for console.log statements
+        run: |
+          if grep -r "console\.log" src/ --include="*.js" --include="*.jsx" | grep -v "// "; then
+            echo "Warning: console.log found in source files"
+          fi
