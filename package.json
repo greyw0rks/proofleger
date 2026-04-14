@@ -1,6 +1,6 @@
 {
   "name": "@greyw0rks/proofleger",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A Web3 proof and identity ledger",
   "main": "dist/index.js",
   "module": "dist/index.js",
