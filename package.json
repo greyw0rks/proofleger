@@ -2,19 +2,26 @@
   "name": "@greyw0rks/proofleger",
   "version": "0.4.0",
   "description": "A Web3 proof and identity ledger",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "files": [
-    "dist"
-  ],
-  "bin": {
-    "proofleger": "dist/index.js"
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
+  "files": ["dist", "README.md", "LICENSE"],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts"
+    "clean": "rimraf dist",
+    "build": "npm run clean && tsup src/index.ts --format esm,cjs --dts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "stacks",
@@ -29,6 +36,14 @@
   "engines": {
     "node": ">=18"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/greyw0rks/proofleger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/greyw0rks/proofleger/issues"
+  },
+  "homepage": "https://github.com/greyw0rks/proofleger#readme",
   "dependencies": {
     "@stacks/auth": "^7.3.1",
     "@stacks/connect": "^8.2.5",
@@ -38,15 +53,9 @@
     "bip39": "^3.1.0"
   },
   "devDependencies": {
-    "tsup": "^8.0.0",
-    "typescript": "^5.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/greyw0rks/proofleger.git"
-  },
-  "bugs": {
-    "url": "https://github.com/greyw0rks/proofleger/issues"
-  },
-  "homepage": "https://proofleger.vercel.app"
+    "@types/node": "^25.5.0",
+    "rimraf": "^6.1.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
 }
