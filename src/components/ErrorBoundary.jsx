@@ -1,10 +1,6 @@
 "use client";
 import { Component } from "react";
 
-/**
- * ErrorBoundary catches runtime errors in the component tree
- * and renders a neo-brutalist fallback UI.
- */
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -16,22 +12,22 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error("ProofLedger ErrorBoundary caught:", error, info);
+    console.error("ProofLedger error:", error, info);
   }
-
-  handleReset = () => {
-    this.setState({ hasError: false, error: null });
-  };
 
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback) return this.props.fallback;
-      return (
-        <div style={{ border: "3px solid #ff3333", padding: "24px", background: "#0a0a0a", color: "#f5f0e8", fontFamily: "Space Grotesk, sans-serif", boxShadow: "6px 6px 0px #ff3333" }}>
-          <p style={{ fontFamily: "Archivo Black, sans-serif", color: "#ff3333", marginBottom: "12px", fontSize: "18px" }}>Something went wrong</p>
-          <p style={{ fontSize: "14px", color: "#999", marginBottom: "16px" }}>{this.state.error?.message || "An unexpected error occurred."}</p>
-          <button onClick={this.handleReset} style={{ background: "#f5f0e8", color: "#0a0a0a", border: "3px solid #f5f0e8", padding: "8px 16px", fontFamily: "Archivo Black, sans-serif", cursor: "pointer", boxShadow: "3px 3px 0px #F7931A" }}>
-            Try Again
+      return this.props.fallback || (
+        <div style={{ border:"3px solid #ff3333", padding:24,
+          fontFamily:"Space Grotesk, sans-serif", background:"#0a0a0a" }}>
+          <div style={{ fontFamily:"Archivo Black, sans-serif", fontSize:16,
+            color:"#ff3333", marginBottom:8 }}>SOMETHING WENT WRONG</div>
+          <div style={{ fontFamily:"Space Mono, monospace", fontSize:11, color:"#666",
+            marginBottom:16 }}>{this.state.error?.message || "Unknown error"}</div>
+          <button onClick={() => this.setState({ hasError: false, error: null })}
+            style={{ border:"2px solid #f5f0e8", background:"transparent", color:"#f5f0e8",
+              padding:"8px 16px", fontFamily:"Archivo Black, sans-serif", fontSize:11, cursor:"pointer" }}>
+            TRY AGAIN
           </button>
         </div>
       );
