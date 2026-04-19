@@ -1,18 +1,41 @@
 "use client";
-const CHAINS = [
-  { id:"stacks", label:"Stacks",  sub:"Bitcoin L2", color:"#F7931A" },
-  { id:"celo",   label:"Celo",    sub:"MiniPay",    color:"#35D07F" },
-];
-export default function ChainSelector({ value, onChange }) {
+import { useNetworkContext, NETWORKS } from "@/context/NetworkContext";
+
+const CHAIN_DESC = {
+  stacks: "Anchored to Bitcoin via Stacks. Permanent & censorship-resistant.",
+  celo:   "Sub-cent fees via Celo. Ideal for high-volume document anchoring.",
+};
+
+export default function ChainSelector() {
+  const { network, switchNetwork } = useNetworkContext();
+
   return (
-    <div style={{ display:"flex", gap:0 }}>
-      {CHAINS.map(c => (
-        <button key={c.id} onClick={() => onChange(c.id)}
-          style={{ padding:"10px 20px", background:value===c.id?c.color:"transparent", color:value===c.id?"#000":c.color, border:`3px solid ${c.color}`, borderRight:c.id==="stacks"?"none":`3px solid ${c.color}`, fontFamily:"Archivo Black, sans-serif", fontSize:12, cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
-          <span>{c.label}</span>
-          <span style={{ fontSize:9, fontFamily:"Space Mono, monospace", opacity:0.7 }}>{c.sub}</span>
-        </button>
-      ))}
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      {Object.values(NETWORKS).map(net => {
+        const active = network.id === net.id;
+        return (
+          <div key={net.id} onClick={() => switchNetwork(net.id)}
+            style={{ border:`3px solid ${active ? net.color : "#222"}`,
+              padding:16, cursor:"pointer",
+              boxShadow: active ? `4px 4px 0 ${net.color}` : "none",
+              transition:"all 0.15s" }}>
+            <div style={{ display:"flex", justifyContent:"space-between",
+              alignItems:"center", marginBottom:6 }}>
+              <div style={{ fontFamily:"Archivo Black, sans-serif", fontSize:14,
+                color: active ? net.color : "#888" }}>
+                {net.label.toUpperCase()}
+              </div>
+              <div style={{ width:14, height:14, borderRadius:"50%",
+                border:`3px solid ${active ? net.color : "#444"}`,
+                background: active ? net.color : "transparent" }} />
+            </div>
+            <div style={{ fontFamily:"Space Grotesk, sans-serif", fontSize:11,
+              color:"#555" }}>
+              {CHAIN_DESC[net.id]}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
