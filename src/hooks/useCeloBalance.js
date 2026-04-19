@@ -1,23 +1,26 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { CELO_RPC } from "@/lib/wallet-celo";
-export function useCeloBalance(address) {
+import { useState, useEffect } from "react";
+import { useAccount } from "wagmi";
+import { createPublicClient, http, formatEther } from "viem";
+
+const CELO_CHAIN = { id: 42220, name: "Celo",
+  nativeCurrency: { name:"CELO", symbol:"CELO", decimals:18 },
+  rpcUrls: { default: { http: ["https://feth.celo.org"] } } };
+
+export function useCeloBalance() {
+  const { address } = useAccount();
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(false);
-  const fetch_ = useCallback(async () => {
-    if (!address) return;
+
+  useEffect(() => {
+    if (!address) { setBalance(null); return; }
     setLoading(true);
-    try {
-      const res = await fetch(CELO_RPC, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jsonrpc:"2.0", method:"eth_getBalance", params:[address,"latest"], id:1 }),
-      });
-      const data = await res.json();
-      const wei = BigInt(data.result || "0");
-      setBalance(Number(wei) / 1e18);
-    } catch {}
-    finally { setLoading(false); }
+    const client = createPublicClient({ chain: CELO_CHAIN, transport: http() });
+    client.getBalance({ address })
+      .then(b => setBalance(parseFloat(formatEther(b)).toFixed(4)))
+      .catch(() => setBalance(null))
+      .finally(() => setLoading(false));
   }, [address]);
-  useEffect(() => { fetch_(); }, [fetch_]);
-  return { balance, loading, refetch: fetch_ };
+
+  return { balance, loading };
 }
