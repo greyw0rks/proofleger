@@ -1,28 +1,38 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { getRecentCeloAnchors } from "@/lib/celo-events";
+import { useState, useEffect } from "react";
+import { createPublicClient, http, parseAbi, parseAbiItem } from "viem";
 
-export function useCeloEvents(autoRefresh = true) {
+const CELO_CHAIN = { id: 42220, name: "Celo",
+  nativeCurrency: { name:"CELO", symbol:"CELO", decimals:18 },
+  rpcUrls: { default: { http: ["https://feth.celo.org"] } } };
+
+const CONTRACT = "0x251B3302c0CcB1cFBeb0cda3dE06C2D312a41735";
+
+export function useCeloEvents(limit = 20) {
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState(null);
-
-  const fetch_ = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await getRecentCeloAnchors();
-      setEvents(result);
-      setLastUpdate(new Date());
-    } catch {}
-    finally { setLoading(false); }
-  }, []);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch_();
-    if (!autoRefresh) return;
-    const interval = setInterval(fetch_, 30_000);
-    return () => clearInterval(interval);
-  }, [fetch_, autoRefresh]);
+    const client = createPublicClient({ chain: CELO_CHAIN, transport: http() });
+    client.getLogs({
+      address: CONTRACT,
+      event: parseAbiItem("event DocumentAnchored(bytes32 indexed hash, address indexed owner, string title, string docType, uint256 blockNumber)"),
+      fromBlock: "earliest",
+    })
+    .then(logs => {
+      const parsed = logs.slice(-limit).reverse().map(l => ({
+        hash: l.args.hash,
+        owner: l.args.owner,
+        title: l.args.title,
+        docType: l.args.docType,
+        blockNumber: Number(l.args.blockNumber || l.blockNumber),
+        txHash: l.transactionHash,
+      }));
+      setEvents(parsed);
+    })
+    .catch(() => setEvents([]))
+    .finally(() => setLoading(false));
+  }, [limit]);
 
-  return { events, loading, lastUpdate, refresh: fetch_ };
+  return { events, loading };
 }
