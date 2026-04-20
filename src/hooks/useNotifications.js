@@ -1,9 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
-import { subscribeNotifications, removeNotification } from "@/lib/notifications";
+import { subscribe, dismiss } from "@/lib/notification-queue";
 
 export function useNotifications() {
-  const [notes, setNotes] = useState([]);
-  useEffect(() => subscribeNotifications(setNotes), []);
-  return { notes, dismiss: removeNotification };
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    const unsub = subscribe(setNotifications);
+    return unsub;
+  }, []);
+
+  return { notifications, dismiss };
 }
