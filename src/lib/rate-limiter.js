@@ -1,29 +1,21 @@
 const queues = new Map();
 
-export function rateLimit(key, fn, intervalMs = 1000) {
-  if (!queues.has(key)) queues.set(key, { last: 0, pending: [] });
-  const q = queues.get(key);
+export function createRateLimiter(key, requestsPerSecond = 2) {
+  const intervalMs = 1000 / requestsPerSecond;
+  if (!queues.has(key)) queues.set(key, { lastRun: 0, timer: null });
 
-  return new Promise((resolve, reject) => {
-    q.pending.push({ fn, resolve, reject });
-    processQueue(key, intervalMs);
-  });
-}
-
-async function processQueue(key, intervalMs) {
-  const q = queues.get(key);
-  if (!q || q.processing) return;
-  q.processing = true;
-
-  while (q.pending.length > 0) {
+  return async function limited(fn) {
+    const q = queues.get(key);
     const now = Date.now();
-    const wait = Math.max(0, q.last + intervalMs - now);
+    const wait = Math.max(0, q.lastRun + intervalMs - now);
     if (wait > 0) await new Promise(r => setTimeout(r, wait));
-
-    const { fn, resolve, reject } = q.pending.shift();
-    q.last = Date.now();
-    try { resolve(await fn()); } catch(e) { reject(e); }
-  }
-
-  q.processing = false;
+    q.lastRun = Date.now();
+    return fn();
+  };
 }
+
+// Pre-built limiter for Hiro API (3 req/sec)
+export const hiroLimited = createRateLimiter("hiro", 3);
+
+// Pre-built limiter for Celo RPC (5 req/sec)
+export const celoLimited = createRateLimiter("celo", 5);
