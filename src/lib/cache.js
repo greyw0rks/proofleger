@@ -1,20 +1,34 @@
 const store = new Map();
+
+export async function cacheWrap(key, fn, ttlMs = 60_000) {
+  const existing = store.get(key);
+  if (existing && Date.now() < existing.expires) return existing.value;
+  const value = await fn();
+  store.set(key, { value, expires: Date.now() + ttlMs });
+  return value;
+}
+
+export function cacheGet(key) {
+  const e = store.get(key);
+  if (!e || Date.now() >= e.expires) return null;
+  return e.value;
+}
+
 export function cacheSet(key, value, ttlMs = 60_000) {
   store.set(key, { value, expires: Date.now() + ttlMs });
 }
-export function cacheGet(key) {
-  const entry = store.get(key);
-  if (!entry) return null;
-  if (Date.now() > entry.expires) { store.delete(key); return null; }
-  return entry.value;
+
+export function cacheInvalidate(key) {
+  store.delete(key);
 }
-export function cacheClear(key) {
-  if (key) store.delete(key); else store.clear();
+
+export function cacheClear() {
+  store.clear();
 }
-export async function cacheWrap(key, fn, ttlMs = 60_000) {
-  const cached = cacheGet(key);
-  if (cached !== null) return cached;
-  const result = await fn();
-  cacheSet(key, result, ttlMs);
-  return result;
+
+export function cacheStats() {
+  const now = Date.now();
+  let active = 0;
+  store.forEach(v => { if (now < v.expires) active++; });
+  return { total: store.size, active };
 }
