@@ -1,12 +1,22 @@
 "use client";
+import { useMiniPay } from "@/hooks/useMiniPay";
+
 export default function MiniPayBanner() {
+  const { isMiniPay, address, connecting, connect } = useMiniPay();
+  if (!isMiniPay || address) return null;
   return (
-    <div style={{ background:"#0d1f16", border:"3px solid #35D07F", padding:"10px 20px", marginBottom:20, display:"flex", alignItems:"center", gap:12 }}>
-      <span style={{ fontSize:20 }}>⚡</span>
-      <div>
-        <div style={{ fontFamily:"Archivo Black, sans-serif", fontSize:13, color:"#35D07F" }}>MINIPAY DETECTED</div>
-        <div style={{ fontFamily:"Space Mono, monospace", fontSize:10, color:"#888", marginTop:2 }}>Wallet auto-connected · Celo network active</div>
+    <div style={{ background:"#0d1f16", border:"3px solid #35D07F",
+      padding:"12px 20px", display:"flex", justifyContent:"space-between",
+      alignItems:"center", gap:12 }}>
+      <div style={{ fontFamily:"Space Grotesk, sans-serif", fontSize:13, color:"#f5f0e8" }}>
+        MiniPay detected — connect to anchor documents
       </div>
+      <button onClick={connect} disabled={connecting}
+        style={{ background:"#35D07F", border:"none", color:"#000",
+          padding:"8px 18px", fontFamily:"Archivo Black, sans-serif",
+          fontSize:11, cursor:"pointer", flexShrink:0 }}>
+        {connecting ? "CONNECTING..." : "CONNECT"}
+      </button>
     </div>
   );
 }
