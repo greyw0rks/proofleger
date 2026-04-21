@@ -1,21 +1,46 @@
 "use client";
+import Accordion from "@/components/Accordion";
+
 const FAQS = [
-  { q:"What is ProofLedger?", a:"ProofLedger lets you anchor SHA-256 hashes of documents permanently to Bitcoin via Stacks. It proves a document existed at a specific time without revealing the content." },
-  { q:"Is my document uploaded?", a:"No. Your file never leaves your browser. We compute a SHA-256 hash locally and only the hash is sent to the blockchain." },
-  { q:"What does anchoring cost?", a:"Each anchor transaction costs approximately 0.001 STX in fees. You need a small amount of STX in your Hiro Wallet." },
-  { q:"Can I verify without a wallet?", a:"Yes. The verify function is read-only and requires no wallet connection." },
-  { q:"What is a soulbound NFT?", a:"Achievement NFTs are non-transferable tokens tied to your wallet. They represent verified credentials and cannot be sold or moved." },
+  { question:"What is ProofLedger?",
+    answer:"ProofLedger is a multi-chain document anchoring application. It lets you create permanent, verifiable proof that a document existed at a specific point in time by anchoring its SHA-256 hash to Bitcoin via Stacks and to Celo." },
+  { question:"What does anchoring a document mean?",
+    answer:"Anchoring computes a SHA-256 fingerprint of your document and records it on-chain. The actual document never leaves your device — only the hash is stored. This proves the document existed without exposing its contents." },
+  { question:"Can I anchor any file type?",
+    answer:"Yes. ProofLedger hashes any file — PDFs, images, Word documents, videos, ZIPs. The hash is computed client-side in your browser and never uploaded to any server." },
+  { question:"What does verification prove?",
+    answer:"Verification proves that the exact document you uploaded matches the hash recorded on-chain at a specific Bitcoin block height. If even one byte changes, the hash will not match." },
+  { question:"How much does it cost?",
+    answer:"On Stacks, anchoring costs approximately 0.001 STX (~$0.001). On Celo, gas is sub-cent. The ProofLedger verifier contract charges an additional 0.001 STX per verification query." },
+  { question:"Is my document private?",
+    answer:"Yes. Only the SHA-256 hash is stored on-chain — never the document itself. Nobody can reconstruct your document from its hash." },
+  { question:"What is the difference between Stacks and Celo anchoring?",
+    answer:"Stacks anchors to Bitcoin, providing the strongest security guarantees. Celo offers sub-cent fees and 5-second confirmation, ideal for high-volume use cases and mobile (MiniPay) users." },
+  { question:"What is an attestation?",
+    answer:"An attestation is a third-party endorsement. Another wallet can attest that they have verified your document, adding additional credibility to the proof." },
+  { question:"What are ProofLedger NFTs?",
+    answer:"NFTs on ProofLedger are soulbound achievement tokens on Stacks. They cannot be transferred and represent milestones like anchoring your first document or reaching certain activity levels." },
 ];
-export default function FaqPage() {
+
+export default function FAQPage() {
   return (
-    <div style={{ maxWidth:720, margin:"80px auto", padding:"0 24px", fontFamily:"Space Grotesk, sans-serif", color:"#f5f0e8" }}>
-      <h1 style={{ fontFamily:"Archivo Black, sans-serif", fontSize:28, marginBottom:32 }}>FAQ</h1>
-      {FAQS.map((f,i) => (
-        <div key={i} style={{ borderBottom:"2px solid #222", paddingBottom:20, marginBottom:20 }}>
-          <h3 style={{ fontFamily:"Archivo Black, sans-serif", fontSize:16, color:"#F7931A", marginBottom:8 }}>{f.q}</h3>
-          <p style={{ color:"#888", lineHeight:1.7 }}>{f.a}</p>
-        </div>
-      ))}
+    <div style={{ maxWidth:720, margin:"0 auto", padding:"40px 24px",
+      fontFamily:"Space Grotesk, sans-serif", color:"#f5f0e8",
+      minHeight:"100vh", background:"#0a0a0a" }}>
+      <h1 style={{ fontFamily:"Archivo Black, sans-serif", fontSize:28, marginBottom:8 }}>FAQ</h1>
+      <p style={{ color:"#888", fontSize:13, marginBottom:32 }}>
+        Frequently asked questions about ProofLedger
+      </p>
+      <Accordion items={FAQS} />
+      <div style={{ marginTop:40, borderTop:"2px solid #1a1a1a", paddingTop:24,
+        fontFamily:"Space Mono, monospace", fontSize:11, color:"#555" }}>
+        More questions?{" "}
+        <a href="https://github.com/greyw0rks/proofleger"
+          target="_blank" rel="noreferrer"
+          style={{ color:"#F7931A", textDecoration:"none" }}>
+          Open an issue on GitHub ↗
+        </a>
+      </div>
     </div>
   );
 }
