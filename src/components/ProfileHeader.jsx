@@ -1,29 +1,43 @@
 "use client";
+import { useClipboard } from "@/hooks/useClipboard";
 import ReputationBadge from "./ReputationBadge";
-import WalletAddress from "./WalletAddress";
 
-export default function ProfileHeader({ address, displayName, score = 0, docCount = 0, isOwner = false }) {
-  const initials = displayName ? displayName.slice(0, 2).toUpperCase() : address?.slice(2, 4).toUpperCase();
+export default function ProfileHeader({ address, score = 0, docCount = 0 }) {
+  const { copy, copied } = useClipboard();
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:20, marginBottom:32, paddingBottom:24, borderBottom:"3px solid #222" }}>
-      <div style={{ width:64, height:64, background:"#F7931A", display:"flex", alignItems:"center", justifyContent:"center",
-        fontFamily:"Archivo Black, sans-serif", fontSize:24, color:"#000", flexShrink:0 }}>
-        {initials}
-      </div>
-      <div style={{ flex:1 }}>
-        {displayName && <div style={{ fontFamily:"Archivo Black, sans-serif", fontSize:22, color:"#f5f0e8", marginBottom:4 }}>{displayName}</div>}
-        <WalletAddress address={address} />
-        <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:12 }}>
-          <ReputationBadge score={score} size="sm" />
-          <span style={{ fontFamily:"Space Mono, monospace", fontSize:11, color:"#666" }}>{docCount} proof{docCount!==1?"s":""}</span>
+    <div style={{ marginBottom:24 }}>
+      <div style={{ display:"flex", justifyContent:"space-between",
+        alignItems:"flex-start", flexWrap:"wrap", gap:12 }}>
+        <div>
+          <div style={{ fontFamily:"Archivo Black, sans-serif", fontSize:22,
+            color:"#f5f0e8", marginBottom:6 }}>
+            {address?.slice(0,8)}...{address?.slice(-6)}
+          </div>
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            <ReputationBadge score={score} showScore />
+            {docCount > 0 && (
+              <span style={{ fontFamily:"Space Mono, monospace", fontSize:10, color:"#555" }}>
+                {docCount} document{docCount !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <button onClick={() => copy(address)}
+            style={{ border:"2px solid #333", background:"transparent",
+              color:"#666", padding:"6px 12px", fontFamily:"Archivo Black, sans-serif",
+              fontSize:9, cursor:"pointer", letterSpacing:1 }}>
+            {copied ? "COPIED" : "COPY"}
+          </button>
+          <a href={`https://explorer.hiro.so/address/${address}`}
+            target="_blank" rel="noreferrer"
+            style={{ border:"2px solid #333", color:"#666", padding:"6px 12px",
+              fontFamily:"Archivo Black, sans-serif", fontSize:9,
+              textDecoration:"none", letterSpacing:1 }}>
+            EXPLORER ↗
+          </a>
         </div>
       </div>
-      {isOwner && (
-        <a href="/profile/edit" style={{ border:"2px solid #333", color:"#666", padding:"6px 14px",
-          fontFamily:"Archivo Black, sans-serif", fontSize:10, textDecoration:"none", letterSpacing:1 }}>
-          EDIT
-        </a>
-      )}
     </div>
   );
 }
