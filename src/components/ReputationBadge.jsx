@@ -1,53 +1,23 @@
 "use client";
-import { REPUTATION_TIERS } from "@/lib/constants";
+import { getReputationTier } from "@/hooks/useReputation";
 
-/**
- * ReputationBadge displays a user's reputation tier and score.
- *
- * Tier is determined by total score:
- *   1000+ = Legend (orange)
- *   500+  = Authority (purple)
- *   250+  = Expert (green)
- *   100+  = Contributor (blue)
- *   0+    = Builder (grey)
- *
- * @param {object} props
- * @param {number} props.score - Total reputation score
- * @param {"sm"|"md"|"lg"} [props.size="md"] - Badge size
- * @param {boolean} [props.showScore=true] - Whether to show numeric score
- */
-export default function ReputationBadge({ score = 0, size = "md", showScore = true }) {
-  const tier = REPUTATION_TIERS.find((t) => score >= t.min) || REPUTATION_TIERS[REPUTATION_TIERS.length - 1];
-
-  const sizes = {
-    sm: { padding: "2px 8px",  fontSize: "10px", scoreSize: "10px" },
-    md: { padding: "4px 12px", fontSize: "12px", scoreSize: "12px" },
-    lg: { padding: "6px 16px", fontSize: "14px", scoreSize: "14px" },
-  };
-  const sz = sizes[size] || sizes.md;
-
+export default function ReputationBadge({ score = 0, showScore = false }) {
+  const tier = getReputationTier(score);
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-      <span style={{
-        border: `2px solid ${tier.color}`,
-        color: tier.color,
-        padding: sz.padding,
-        fontSize: sz.fontSize,
-        fontFamily: "Archivo Black, sans-serif",
-        boxShadow: `2px 2px 0px ${tier.color}`,
-        letterSpacing: "0.5px",
-      }}>
+    <div style={{ display:"inline-flex", alignItems:"center", gap:6,
+      border:`2px solid ${tier.color}`, padding:"3px 10px" }}>
+      <div style={{ width:6, height:6, borderRadius:"50%",
+        background:tier.color }} />
+      <span style={{ fontFamily:"Archivo Black, sans-serif",
+        fontSize:9, color:tier.color, letterSpacing:1 }}>
         {tier.label}
       </span>
       {showScore && (
-        <span style={{
-          fontSize: sz.scoreSize,
-          color: "#888",
-          fontFamily: "Space Mono, monospace",
-        }}>
-          {score.toLocaleString()} pts
+        <span style={{ fontFamily:"Space Mono, monospace",
+          fontSize:9, color:tier.color }}>
+          {score}
         </span>
       )}
-    </span>
+    </div>
   );
 }
