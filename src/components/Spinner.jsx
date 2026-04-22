@@ -1,9 +1,11 @@
 "use client";
-export default function Spinner({ size = 24, color = "#F7931A" }) {
+export default function Spinner({ size = 20, color = "#F7931A" }) {
   return (
-    <>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={{ width:size, height:size, border:`3px solid #333`, borderTop:`3px solid ${color}`, borderRadius:"50%", animation:"spin 0.8s linear infinite", display:"inline-block" }} />
-    </>
+    <span style={{ display:"inline-block", width:size, height:size,
+      border:`2px solid transparent`, borderTop:`2px solid ${color}`,
+      borderRadius:"50%", animation:"spin 0.7s linear infinite",
+      flexShrink:0 }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </span>
   );
 }
