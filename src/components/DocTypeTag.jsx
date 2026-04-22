@@ -1,10 +1,21 @@
 "use client";
-const COLORS = { diploma:"#F7931A", certificate:"#00ff88", research:"#a78bfa", art:"#38bdf8", contribution:"#22c55e", award:"#fbbf24", other:"#888" };
+const TYPE_COLORS = {
+  diploma:      "#F7931A",
+  certificate:  "#38bdf8",
+  research:     "#a78bfa",
+  contribution: "#00ff88",
+  award:        "#fbbf24",
+  art:          "#f472b6",
+  other:        "#555",
+};
+
 export default function DocTypeTag({ type }) {
-  const color = COLORS[type?.toLowerCase()] || COLORS.other;
+  const color = TYPE_COLORS[type?.toLowerCase()] || TYPE_COLORS.other;
   return (
-    <span style={{ border:`2px solid ${color}`, color, padding:"2px 8px", fontSize:10, fontFamily:"Archivo Black, sans-serif", letterSpacing:"0.5px" }}>
-      {type?.toUpperCase() || "OTHER"}
+    <span style={{ border:`2px solid ${color}`, padding:"2px 8px",
+      fontFamily:"Archivo Black, sans-serif", fontSize:9,
+      color, letterSpacing:1, flexShrink:0 }}>
+      {(type || "OTHER").toUpperCase()}
     </span>
   );
 }
