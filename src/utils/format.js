@@ -1,9 +1,37 @@
-export const fmt = {
-  hash: (h, n=8) => !h ? "" : `${h.slice(0,n)}...${h.slice(-n)}`,
-  address: (a) => !a ? "" : `${a.slice(0,6)}...${a.slice(-4)}`,
-  stx: (micro, d=4) => `${(Number(micro)/1e6).toFixed(d)} STX`,
-  block: (n) => `Block #${Number(n).toLocaleString()}`,
-  docType: (t) => t ? t.charAt(0).toUpperCase()+t.slice(1).toLowerCase() : "Document",
-  bytes: (b) => { if(!b) return "0 B"; const u=["B","KB","MB","GB"]; const i=Math.floor(Math.log(b)/Math.log(1024)); return `${(b/Math.pow(1024,i)).toFixed(1)} ${u[i]}`; },
-  date: (ts) => new Date(ts*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
-};
+export function fmtStx(microStx) {
+  const stx = Number(microStx) / 1_000_000;
+  if (stx >= 1000) return `${(stx / 1000).toFixed(2)}K STX`;
+  return `${stx.toFixed(4)} STX`;
+}
+
+export function fmtBlock(height) {
+  if (!height) return "—";
+  return `#${Number(height).toLocaleString()}`;
+}
+
+export function fmtAddress(addr, chars = 6) {
+  if (!addr) return "";
+  return `${addr.slice(0, chars)}...${addr.slice(-4)}`;
+}
+
+export function fmtScore(score) {
+  if (score >= 1000) return `${(score / 1000).toFixed(1)}K`;
+  return String(score);
+}
+
+export function fmtPercent(n, total) {
+  if (!total) return "0%";
+  return `${Math.round((n / total) * 100)}%`;
+}
+
+export function fmtRelativeTime(isoString) {
+  if (!isoString) return "—";
+  const diff  = Date.now() - new Date(isoString).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins < 1)   return "just now";
+  if (mins < 60)  return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${days}d ago`;
+}
