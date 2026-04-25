@@ -1,34 +1,43 @@
 "use client";
-import { useEffect } from "react";
-import { useKeyboard } from "@/hooks/useKeyboard";
+import { useEffect, useRef } from "react";
+import { useKeyPress } from "@/hooks/useKeyPress";
 
 export default function Modal({ open, onClose, title, children, maxWidth = 560 }) {
-  useKeyboard({ "escape": onClose });
+  const overlayRef = useRef(null);
+  useKeyPress("Escape", { onPress: open ? onClose : undefined });
+
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
+    else      document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
   if (!open) return null;
+
   return (
-    <div onClick={onClose}
-      style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)",
-        display:"flex", alignItems:"center", justifyContent:"center",
-        zIndex:1000, padding:24 }}>
-      <div onClick={e => e.stopPropagation()}
-        style={{ background:"#0a0a0a", border:"3px solid #f5f0e8",
-          boxShadow:"8px 8px 0 #f5f0e8", width:"100%", maxWidth,
-          padding:28, position:"relative" }}>
-        <div style={{ display:"flex", justifyContent:"space-between",
-          alignItems:"center", marginBottom:20 }}>
-          {title && <div style={{ fontFamily:"Archivo Black, sans-serif",
-            fontSize:18, color:"#f5f0e8" }}>{title}</div>}
+    <div ref={overlayRef}
+      onClick={e => { if (e.target === overlayRef.current) onClose(); }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 200, padding: 24 }}>
+      <div style={{ background: "#0a0a0a", border: "3px solid #222",
+        width: "100%", maxWidth, maxHeight: "90vh", overflowY: "auto",
+        position: "relative" }}>
+        <div style={{ display: "flex", justifyContent: "space-between",
+          alignItems: "center", padding: "18px 20px",
+          borderBottom: "2px solid #111" }}>
+          {title && (
+            <span style={{ fontFamily: "Archivo Black, sans-serif",
+              fontSize: 13, color: "#f5f0e8", letterSpacing: 1 }}>
+              {title}
+            </span>
+          )}
           <button onClick={onClose}
-            style={{ background:"none", border:"none", color:"#666",
-              cursor:"pointer", fontSize:20, lineHeight:1, marginLeft:"auto" }}>×</button>
+            style={{ border: "none", background: "transparent",
+              color: "#555", fontSize: 20, cursor: "pointer",
+              lineHeight: 1, marginLeft: "auto" }}>×</button>
         </div>
-        {children}
+        <div style={{ padding: 20 }}>{children}</div>
       </div>
     </div>
   );
