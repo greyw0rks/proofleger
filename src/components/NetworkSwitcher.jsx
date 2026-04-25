@@ -1,46 +1,33 @@
 "use client";
+import { useNetworkSwitch } from "@/hooks/useNetworkSwitch";
 
-/**
- * NetworkSwitcher - Toggle between Stacks and Celo networks
- *
- * @param {{ network: "stacks"|"celo", onChange: function }} props
- */
-export default function NetworkSwitcher({ network, onChange }) {
-  const networks = [
-    { id: "stacks", label: "STACKS", sub: "Bitcoin L2" },
-    { id: "celo",   label: "CELO",   sub: "MiniPay" },
-  ];
+const COLORS = { stacks: "#F7931A", celo: "#FCFF52" };
+
+export default function NetworkSwitcher({ compact = false }) {
+  const { network, networks, switchTo } = useNetworkSwitch();
+
+  if (!networks.length) return null;
 
   return (
-    <div style={{ display: "flex", gap: "0", marginBottom: "0" }}>
-      {networks.map((n) => {
-        const active = network === n.id;
+    <div style={{ display: "flex", gap: 6 }}>
+      {networks.map(n => {
+        const active = n.id === network?.id;
+        const color  = COLORS[n.id] || "#F7931A";
         return (
-          <button
-            key={n.id}
-            onClick={() => onChange(n.id)}
+          <button key={n.id} onClick={() => switchTo(n.id)}
             style={{
-              padding: "10px 24px",
-              background: active ? "#F7931A" : "transparent",
-              color: active ? "#0a0a0a" : "#f5f0e8",
-              border: "3px solid " + (active ? "#F7931A" : "#f5f0e8"),
-              borderRight: n.id === "stacks" ? "none" : "3px solid " + (active ? "#F7931A" : "#f5f0e8"),
+              border: `2px solid ${active ? color : "#333"}`,
+              background: active ? `${color}12` : "transparent",
+              color: active ? color : "#555",
+              padding: compact ? "4px 10px" : "7px 16px",
               fontFamily: "Archivo Black, sans-serif",
-              fontSize: "13px",
-              cursor: "pointer",
-              letterSpacing: "1px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "2px",
+              fontSize: compact ? 8 : 10,
+              cursor: active ? "default" : "pointer",
+              letterSpacing: 1,
               transition: "all 0.1s",
-              boxShadow: active ? "3px 3px 0px #d4780f" : "none",
-            }}
-          >
-            <span>{n.label}</span>
-            <span style={{ fontSize: "9px", opacity: 0.7, fontFamily: "Space Mono, monospace", fontWeight: "normal" }}>
-              {n.sub}
-            </span>
+            }}>
+            {active && <span style={{ marginRight: 5, fontSize: 7 }}>●</span>}
+            {n.label?.toUpperCase()}
           </button>
         );
       })}
