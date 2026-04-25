@@ -1,61 +1,43 @@
 /**
- * @fileoverview Centralized constants for ProofLedger
- * Single source of truth for contract addresses, network config,
- * reputation tiers, and document type definitions
+ * ProofLedger Application Constants
  */
 
-// ─── Network ────────────────────────────────────────────────
-export const USE_TESTNET = false;
-export const NETWORK = "mainnet";
+// ── Stacks ────────────────────────────────────────────────
+export const STACKS_CONTRACT_ADDRESS = "SP1SY1E599GN04XRD2DQBKV7E62HYBJR2CT9S5QKK";
+export const STACKS_CONTRACT_NAME    = "proofleger3";
+export const STACKS_API              = "https://api.hiro.so";
+export const STACKS_EXPLORER         = "https://explorer.hiro.so";
 
-// ─── Contract Addresses ─────────────────────────────────────
-export const CONTRACT_ADDRESS = "SP1SY1E599GN04XRD2DQBKV7E62HYBJR2CT9S5QKK";
-export const CONTRACTS = {
-  CORE: `${CONTRACT_ADDRESS}.proofleger3`,
-  CREDENTIALS: `${CONTRACT_ADDRESS}.credentials`,
-  ACHIEVEMENTS: `${CONTRACT_ADDRESS}.achievements`,
-};
+// ── Celo ──────────────────────────────────────────────────
+export const CELO_CHAIN_ID      = 42220;
+export const CELO_RPC           = "https://feth.celo.org";
+export const CELO_EXPLORER      = "https://celoscan.io";
 
-// ─── API ────────────────────────────────────────────────────
-export const HIRO_API_BASE = "https://api.hiro.so";
-export const STACKS_EXPLORER = "https://explorer.hiro.so";
-
-// ─── Document Types ─────────────────────────────────────────
+// ── Document types ────────────────────────────────────────
 export const DOC_TYPES = [
-  { value: "diploma",      label: "Diploma",      emoji: "🎓" },
-  { value: "certificate",  label: "Certificate",  emoji: "📜" },
-  { value: "research",     label: "Research",     emoji: "🔬" },
-  { value: "art",          label: "Art",          emoji: "🎨" },
-  { value: "contribution", label: "Contribution", emoji: "🛠️" },
-  { value: "award",        label: "Award",        emoji: "🏆" },
-  { value: "other",        label: "Other",        emoji: "📄" },
+  { value: "diploma",      label: "Diploma",      color: "#F7931A" },
+  { value: "certificate",  label: "Certificate",  color: "#38bdf8" },
+  { value: "research",     label: "Research",     color: "#a78bfa" },
+  { value: "contribution", label: "Contribution", color: "#00ff88" },
+  { value: "award",        label: "Award",        color: "#fbbf24" },
+  { value: "art",          label: "Art",          color: "#f472b6" },
+  { value: "other",        label: "Other",        color: "#555"    },
 ];
 
-// ─── Reputation ─────────────────────────────────────────────
-export const REPUTATION_SCORES = {
-  diploma: 50, research: 40, certificate: 30,
-  art: 20, contribution: 20, award: 10, other: 10,
-};
-export const ATTESTATION_SCORE = 10;
-export const NFT_SCORE = 25;
+// ── Limits ────────────────────────────────────────────────
+export const MAX_TITLE_LENGTH  = 100;
+export const LARGE_FILE_MB     = 5;
+export const HASH_CHUNK_SIZE   = 2 * 1024 * 1024; // 2MB
 
-export const REPUTATION_TIERS = [
-  { min: 1000, label: "Legend",      color: "#F7931A" },
-  { min: 500,  label: "Authority",   color: "#a78bfa" },
-  { min: 250,  label: "Expert",      color: "#22c55e" },
-  { min: 100,  label: "Contributor", color: "#38bdf8" },
-  { min: 0,    label: "Builder",     color: "#666"    },
-];
-
-// ─── UI ─────────────────────────────────────────────────────
-export const COLORS = {
-  black:  "#0a0a0a",
-  white:  "#f5f0e8",
-  orange: "#F7931A",
-  green:  "#00ff88",
-  red:    "#ff3333",
-  grey:   "#888",
+// ── Cache keys ────────────────────────────────────────────
+export const CACHE_KEYS = {
+  proofHistory:   "pl:proof-history",
+  networkPref:    "pl:network",
+  walletAddress:  "pl:wallet-address",
+  recentHashes:   "pl:recent-hashes",
 };
 
-export const MAX_FILE_SIZE_MB = 100;
-export const STX_FEE_MICROSTACK = 1000;
+// ── Timing ────────────────────────────────────────────────
+export const STACKS_BLOCK_TIME_SECS = 600;  // ~10 min
+export const CELO_BLOCK_TIME_SECS   = 5;    // ~5 sec
+export const CLIPBOARD_RESET_MS     = 1800;
