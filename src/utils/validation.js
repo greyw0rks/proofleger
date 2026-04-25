@@ -1,28 +1,43 @@
-export function validateHash(hash) {
-  if (!hash) return "Hash is required";
+/**
+ * ProofLedger input validation utilities
+ */
+
+// Validates a 64-char lowercase hex SHA-256 hash
+export function isValidHash(hash) {
+  if (!hash || typeof hash !== "string") return false;
   const clean = hash.replace(/^0x/i, "");
-  if (clean.length !== 64)  return "Hash must be 64 hex characters";
-  if (!/^[0-9a-fA-F]+$/.test(clean)) return "Hash must contain only hex characters";
-  return null;
+  return /^[0-9a-f]{64}$/i.test(clean);
 }
 
-export function validateTitle(title) {
-  if (!title?.trim()) return "Title is required";
-  if (title.trim().length > 100) return "Title must be 100 characters or less";
-  if (!/^[\x20-\x7E]*$/.test(title)) return "Title must contain only printable ASCII characters";
-  return null;
+// Validates a Stacks principal (standard or contract)
+export function isValidStacksAddress(address) {
+  if (!address || typeof address !== "string") return false;
+  return /^SP[A-Z0-9]{33,41}/.test(address);
 }
 
-export function validateDocType(type) {
-  const valid = ["diploma","certificate","research","contribution","award","art","other"];
-  if (!type) return "Document type is required";
-  if (!valid.includes(type)) return `Type must be one of: ${valid.join(", ")}`;
-  return null;
+// Validates an EVM address (Celo / Ethereum)
+export function isValidEvmAddress(address) {
+  if (!address || typeof address !== "string") return false;
+  return /^0x[0-9a-fA-F]{40}$/.test(address);
 }
 
-export function validateStacksAddress(addr) {
-  if (!addr) return "Address is required";
-  if (!addr.startsWith("SP") && !addr.startsWith("ST")) return "Must be a Stacks address (starts with SP or ST)";
-  if (addr.length < 30 || addr.length > 52) return "Invalid address length";
-  return null;
+// Returns a clean hash or null
+export function normalizeHash(input) {
+  if (!input) return null;
+  const clean = input.trim().replace(/^0x/i, "").toLowerCase();
+  return isValidHash(clean) ? clean : null;
+}
+
+// Validates doc title constraints (Clarity string-ascii 100)
+export function isValidTitle(title) {
+  if (!title || typeof title !== "string") return false;
+  const trimmed = title.trim();
+  return trimmed.length >= 1 && trimmed.length <= 100 &&
+    /^[\x00-\x7F]*$/.test(trimmed); // ASCII only
+}
+
+export const DOC_TYPES = ["diploma", "certificate", "research", "contribution", "award", "art", "other"];
+
+export function isValidDocType(type) {
+  return DOC_TYPES.includes(type);
 }
