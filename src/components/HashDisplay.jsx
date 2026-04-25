@@ -1,14 +1,26 @@
 "use client";
-import { useClipboard } from "@/hooks/useClipboard";
-export default function HashDisplay({ hash }) {
-  const { copy, copied } = useClipboard();
+import { useState } from "react";
+import CopyButton from "./CopyButton";
+
+export default function HashDisplay({ hash, label = null, showCopy = true }) {
+  const [expanded, setExpanded] = useState(false);
   if (!hash) return null;
+
+  const short = `${hash.slice(0, 12)}...${hash.slice(-8)}`;
+
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, background:"#111", border:"2px solid #333", padding:"8px 12px" }}>
-      <span style={{ fontFamily:"Space Mono, monospace", fontSize:11, color:"#F7931A", flex:1, wordBreak:"break-all" }}>{hash}</span>
-      <button onClick={() => copy(hash)} style={{ border:"2px solid #f5f0e8", background:"transparent", color:"#f5f0e8", padding:"4px 8px", fontFamily:"Archivo Black, sans-serif", fontSize:10, cursor:"pointer", whiteSpace:"nowrap" }}>
-        {copied ? "COPIED!" : "COPY"}
-      </button>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      {label && (
+        <span style={{ fontFamily: "Archivo Black, sans-serif",
+          fontSize: 9, color: "#555", letterSpacing: 1 }}>{label}</span>
+      )}
+      <span
+        onClick={() => setExpanded(e => !e)}
+        style={{ fontFamily: "Space Mono, monospace", fontSize: 9, color: "#F7931A",
+          cursor: "pointer", wordBreak: "break-all" }}>
+        {expanded ? hash : short}
+      </span>
+      {showCopy && <CopyButton text={hash} />}
     </div>
   );
 }
