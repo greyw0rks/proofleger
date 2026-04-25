@@ -3,16 +3,21 @@ import { useState, useEffect } from "react";
 
 export function useMediaQuery(query) {
   const [matches, setMatches] = useState(false);
+
   useEffect(() => {
-    const mq = window.matchMedia(query);
-    setMatches(mq.matches);
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia(query);
+    setMatches(mql.matches);
     const handler = (e) => setMatches(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
   }, [query]);
+
   return matches;
 }
 
-export const useIsMobile = () => useMediaQuery("(max-width: 768px)");
-export const useIsTablet = () => useMediaQuery("(max-width: 1024px)");
-export const useIsDark = () => useMediaQuery("(prefers-color-scheme: dark)");
+// Convenience wrappers for standard breakpoints
+export function useIsMobile()  { return useMediaQuery("(max-width: 639px)"); }
+export function useIsTablet()  { return useMediaQuery("(max-width: 1023px)"); }
+export function useIsDesktop() { return useMediaQuery("(min-width: 1024px)"); }
+export function useIsDark()    { return useMediaQuery("(prefers-color-scheme: dark)"); }
