@@ -1,14 +1,29 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
+
 export function useLocalStorage(key, initialValue) {
-  const [value, setValue] = useState(() => {
-    if (typeof window === "undefined") return initialValue;
-    try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : initialValue; }
-    catch { return initialValue; }
-  });
+  const [storedValue, setStoredValue] = useState(initialValue);
+  const [hydrated, setHydrated]       = useState(false);
+
   useEffect(() => {
-    try { localStorage.setItem(key, JSON.stringify(value)); }
-    catch {}
-  }, [key, value]);
-  return [value, setValue];
+    try {
+      const item = window.localStorage.getItem(key);
+      if (item !== null) setStoredValue(JSON.parse(item));
+    } catch { /* ignore parse errors, keep initialValue */ }
+    setHydrated(true);
+  }, [key]);
+
+  const setValue = useCallback((value) => {
+    try {
+      const toStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(toStore);
+      window.localStorage.setItem(key, JSON.stringify(toStore));
+    } catch(e) { console.warn("useLocalStorage write failed:", e); }
+  }, [key, storedValue]);
+
+  const removeValue = useCallback(() => {
+    try { window.localStorage.removeItem(key); setStoredValue(initialValue); } catch {}
+  }, [key, initialValue]);
+
+  return [storedValue, setValue, { hydrated, removeValue }];
 }
