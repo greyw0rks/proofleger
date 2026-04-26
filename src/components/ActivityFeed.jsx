@@ -1,51 +1,66 @@
 "use client";
-import { useRecentActivity } from "@/hooks/useRecentActivity";
+import { useState, useEffect } from "react";
+import { usePolling } from "@/hooks/usePolling";
 import DocTypeTag from "./DocTypeTag";
-import Spinner from "./Spinner";
+import TxLink     from "./TxLink";
+import { formatRelativeTime } from "@/utils/format";
 
-const FN_LABEL = { store:"ANCHORED", "attest-document":"ATTESTED", "mint-nft":"MINTED" };
-const FN_COLOR = { store:"#F7931A", "attest-document":"#00ff88", "mint-nft":"#a78bfa" };
+const VERIFIER_API = process.env.NEXT_PUBLIC_VERIFIER_API || "";
 
 export default function ActivityFeed({ limit = 15 }) {
-  const { activity, loading } = useRecentActivity(limit);
-  if (loading) return <div style={{ padding:20 }}><Spinner /></div>;
-  if (!activity.length) return (
-    <div style={{ fontFamily:"Space Mono, monospace", fontSize:11, color:"#555", padding:12 }}>
-      No recent activity
-    </div>
-  );
+  const [items,   setItems]   = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchRecent() {
+    if (!VERIFIER_API) return;
+    try {
+      const res  = await fetch(`${VERIFIER_API}/v2/recent?limit=${limit}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setItems(data.results || []);
+    } catch {}
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchRecent(); }, []);
+  usePolling(fetchRecent, 20_000);
+
+  if (loading) return null;
+  if (!items.length) return null;
+
   return (
     <div>
-      {activity.map((a, i) => {
-        const label = Object.entries(FN_LABEL).find(([k]) => a.fn.includes(k))?.[1] || a.fn.toUpperCase();
-        const color = Object.entries(FN_COLOR).find(([k]) => a.fn.includes(k))?.[1] || "#555";
-        const titleArg = a.args[1]?.repr?.replace(/^"|"$/g,"");
-        return (
-          <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:12,
-            padding:"12px 0", borderBottom:"1px solid #111" }}>
-            <div style={{ width:6, height:6, borderRadius:"50%",
-              background:color, flexShrink:0, marginTop:6 }} />
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4 }}>
-                <span style={{ fontFamily:"Archivo Black, sans-serif",
-                  fontSize:9, color, letterSpacing:1 }}>{label}</span>
-                {titleArg && (
-                  <span style={{ fontFamily:"Space Grotesk, sans-serif",
-                    fontSize:12, color:"#f5f0e8" }}>{titleArg.slice(0,36)}</span>
-                )}
-              </div>
-              <div style={{ display:"flex", gap:10, fontFamily:"Space Mono, monospace",
-                fontSize:9, color:"#555" }}>
-                <span>{a.sender?.slice(0,10)}...</span>
-                <span>Block #{a.block?.toLocaleString()}</span>
-                <a href={`https://explorer.hiro.so/txid/${a.txid}`}
-                  target="_blank" rel="noreferrer"
-                  style={{ color:"#444", textDecoration:"none" }}>tx ↗</a>
-              </div>
+      <div style={{ fontFamily: "Archivo Black, sans-serif",
+        fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 12 }}>
+        RECENT ACTIVITY
+      </div>
+      {items.map((item, i) => (
+        <div key={item.tx_id || item.hash + i}
+          style={{ display: "flex", justifyContent: "space-between",
+            alignItems: "flex-start", gap: 12,
+            borderBottom: "1px solid #0f0f0f", padding: "10px 0" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "Archivo Black, sans-serif",
+              fontSize: 10, color: "#f5f0e8", marginBottom: 3,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {item.title || "Untitled document"}
+            </div>
+            <div style={{ fontFamily: "Space Mono, monospace",
+              fontSize: 8, color: "#444" }}>
+              {item.sender?.slice(0, 10)}...
+              {item.tx_id && <> · <TxLink txId={item.tx_id} network={item.chain || "stacks"} /></>}
             </div>
           </div>
-        );
-      })}
+          <div style={{ display: "flex", flexDirection: "column",
+            alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+            {item.doc_type && <DocTypeTag type={item.doc_type} />}
+            <span style={{ fontFamily: "Space Mono, monospace",
+              fontSize: 7, color: "#333" }}>
+              {formatRelativeTime(item.created_at)}
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
