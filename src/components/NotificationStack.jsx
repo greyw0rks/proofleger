@@ -1,30 +1,43 @@
 "use client";
-import { useNotifications } from "@/hooks/useNotifications";
+import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
-const TYPE_COLORS = {
-  success: "#00ff88",
-  error:   "#ff3333",
-  warn:    "#F7931A",
-  info:    "#f5f0e8",
+const TYPE_STYLES = {
+  info:    { border: "#333",    color: "#888",    bg: "#0f0f0f" },
+  success: { border: "#00ff88", color: "#00ff88", bg: "#00ff8808" },
+  warning: { border: "#F7931A", color: "#F7931A", bg: "#F7931A08" },
+  error:   { border: "#ff3333", color: "#ff3333", bg: "#ff333308" },
 };
 
-export default function NotificationStack() {
-  const { notes, dismiss } = useNotifications();
-  if (notes.length === 0) return null;
+function Toast({ id, message, type, onRemove }) {
+  const s = TYPE_STYLES[type] || TYPE_STYLES.info;
   return (
-    <div style={{ position:"fixed", bottom:24, right:24, zIndex:9999, display:"flex", flexDirection:"column", gap:8 }}>
-      {notes.map(n => {
-        const color = TYPE_COLORS[n.type] || TYPE_COLORS.info;
-        return (
-          <div key={n.id} onClick={() => dismiss(n.id)}
-            style={{ border:`3px solid ${color}`, background:"#0a0a0a", color, padding:"12px 20px",
-              fontFamily:"Space Grotesk, sans-serif", fontSize:13, boxShadow:`4px 4px 0 ${color}`,
-              cursor:"pointer", maxWidth:360, animation:"slideIn 0.2s ease" }}>
-            {n.msg}
-          </div>
-        );
-      })}
-      <style>{`@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}`}</style>
+    <div style={{ border: `2px solid ${s.border}`, background: s.bg,
+      padding: "10px 14px", marginBottom: 8, minWidth: 280, maxWidth: 380,
+      display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+      boxShadow: `0 4px 20px rgba(0,0,0,0.6)` }}>
+      <span style={{ fontFamily: "Space Mono, monospace", fontSize: 11,
+        color: s.color, lineHeight: 1.5, flex: 1 }}>{message}</span>
+      <button onClick={() => onRemove(id)}
+        style={{ border: "none", background: "transparent",
+          color: s.color, cursor: "pointer", fontSize: 14,
+          lineHeight: 1, marginLeft: 10, flexShrink: 0 }}>×</button>
     </div>
+  );
+}
+
+export default function NotificationStack({ notifications, onRemove }) {
+  const mounted = useRef(false);
+  useEffect(() => { mounted.current = true; }, []);
+  if (!mounted.current || !notifications.length) return null;
+
+  return createPortal(
+    <div style={{ position: "fixed", bottom: 24, right: 24,
+      zIndex: 300, display: "flex", flexDirection: "column-reverse" }}>
+      {notifications.map(n => (
+        <Toast key={n.id} {...n} onRemove={onRemove} />
+      ))}
+    </div>,
+    document.body
   );
 }
