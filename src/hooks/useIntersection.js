@@ -1,21 +1,21 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 
 export function useIntersection(options = {}) {
-  const [isVisible, setIsVisible] = useState(false);
+  const ref             = useRef(null);
+  const [isVisible, setIsVisible]     = useState(false);
   const [hasBeenVisible, setHasBeenVisible] = useState(false);
-  const ref = useRef(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([entry]) => {
+    const observer = new IntersectionObserver(([entry]) => {
       setIsVisible(entry.isIntersecting);
       if (entry.isIntersecting) setHasBeenVisible(true);
     }, options);
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [options.threshold, options.rootMargin]);
 
   return { ref, isVisible, hasBeenVisible };
 }
