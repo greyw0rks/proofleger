@@ -1,41 +1,31 @@
 "use client";
-import { useState } from "react";
 import AnchorForm from "@/components/AnchorForm";
-import VerifyForm from "@/components/VerifyForm";
-import { useWalletContext } from "@/context/WalletContext";
-import WalletConnect from "@/components/WalletConnect";
+import { useProofHistory } from "@/hooks/useProofHistory";
+import { useNotification } from "@/hooks/useNotification";
+import NotificationStack from "@/components/NotificationStack";
 
 export default function AnchorPage() {
-  const [tab, setTab] = useState("anchor");
-  const { isConnected } = useWalletContext();
+  const { add } = useProofHistory();
+  const { notifications, remove } = useNotification();
 
-  const tabStyle = (t) => ({
-    padding:"12px 24px", border:"none", background:"transparent",
-    color: tab === t ? "#F7931A" : "#555",
-    borderBottom: tab === t ? "3px solid #F7931A" : "3px solid transparent",
-    fontFamily:"Archivo Black, sans-serif", fontSize:12, cursor:"pointer", letterSpacing:1,
-  });
+  function handleSuccess(entry) {
+    add(entry);
+  }
 
   return (
-    <div style={{ maxWidth:720, margin:"0 auto", padding:"40px 24px",
-      fontFamily:"Space Grotesk, sans-serif", color:"#f5f0e8",
-      minHeight:"100vh", background:"#0a0a0a" }}>
-      <div style={{ display:"flex", justifyContent:"space-between",
-        alignItems:"center", marginBottom:32 }}>
-        <div>
-          <h1 style={{ fontFamily:"Archivo Black, sans-serif", fontSize:28, marginBottom:4 }}>
-            PROOFLEDGER
-          </h1>
-          <p style={{ color:"#888", fontSize:13 }}>Anchor documents to Bitcoin and Celo</p>
-        </div>
-        {!isConnected && <WalletConnect />}
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "40px 24px",
+      fontFamily: "Space Grotesk, sans-serif", color: "#f5f0e8",
+      minHeight: "100vh", background: "#0a0a0a" }}>
+      <NotificationStack notifications={notifications} onRemove={remove} />
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontFamily: "Archivo Black, sans-serif", fontSize: 26, marginBottom: 4 }}>
+          ANCHOR
+        </h1>
+        <p style={{ color: "#888", fontSize: 13 }}>
+          Anchor a document hash permanently on-chain
+        </p>
       </div>
-      <div style={{ display:"flex", borderBottom:"2px solid #1a1a1a", marginBottom:28 }}>
-        <button style={tabStyle("anchor")} onClick={() => setTab("anchor")}>ANCHOR</button>
-        <button style={tabStyle("verify")} onClick={() => setTab("verify")}>VERIFY</button>
-      </div>
-      {tab === "anchor" && <AnchorForm />}
-      {tab === "verify" && <VerifyForm />}
+      <AnchorForm onSuccess={handleSuccess} />
     </div>
   );
 }
