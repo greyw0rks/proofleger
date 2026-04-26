@@ -1,21 +1,17 @@
 "use client";
-const TYPE_COLORS = {
-  diploma:      "#F7931A",
-  certificate:  "#38bdf8",
-  research:     "#a78bfa",
-  contribution: "#00ff88",
-  award:        "#fbbf24",
-  art:          "#f472b6",
-  other:        "#555",
-};
+import { DOC_TYPES } from "@/lib/constants";
 
 export default function DocTypeTag({ type }) {
-  const color = TYPE_COLORS[type?.toLowerCase()] || TYPE_COLORS.other;
+  const def   = DOC_TYPES.find(d => d.value === type);
+  const color = def?.color || "#555";
+  const label = def?.label || type || "Other";
+
   return (
-    <span style={{ border:`2px solid ${color}`, padding:"2px 8px",
-      fontFamily:"Archivo Black, sans-serif", fontSize:9,
-      color, letterSpacing:1, flexShrink:0 }}>
-      {(type || "OTHER").toUpperCase()}
+    <span style={{ display: "inline-flex", alignItems: "center",
+      border: `1px solid ${color}44`, background: `${color}10`,
+      padding: "2px 8px", fontFamily: "Archivo Black, sans-serif",
+      fontSize: 8, color, letterSpacing: 1 }}>
+      {label.toUpperCase()}
     </span>
   );
 }
