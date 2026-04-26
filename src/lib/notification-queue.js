@@ -1,33 +1,24 @@
-const subscribers = new Set();
-let queue = [];
-let idCounter = 0;
+/**
+ * Singleton notification queue — lets non-component code fire toasts
+ * Usage: import { toast } from "@/lib/notification-queue"
+ *        toast.success("Anchored!")
+ */
+class NotificationQueue {
+  constructor() { this._listeners = []; }
 
-export const TYPES = { SUCCESS:"success", ERROR:"error", INFO:"info", WARNING:"warning" };
-
-export function notify(message, type = TYPES.INFO, duration = 4000) {
-  const id = ++idCounter;
-  const notification = { id, message, type, duration };
-  queue = [...queue, notification];
-  subscribers.forEach(fn => fn([...queue]));
-  if (duration > 0) {
-    setTimeout(() => dismiss(id), duration);
+  _emit(msg, type, duration) {
+    this._listeners.forEach(fn => fn({ message: msg, type, duration }));
   }
-  return id;
+
+  subscribe(fn) {
+    this._listeners.push(fn);
+    return () => { this._listeners = this._listeners.filter(l => l !== fn); };
+  }
+
+  info(msg, duration = 4000)    { this._emit(msg, "info",    duration); }
+  success(msg, duration = 4000) { this._emit(msg, "success", duration); }
+  warning(msg, duration = 5000) { this._emit(msg, "warning", duration); }
+  error(msg, duration = 6000)   { this._emit(msg, "error",   duration); }
 }
 
-export function dismiss(id) {
-  queue = queue.filter(n => n.id !== id);
-  subscribers.forEach(fn => fn([...queue]));
-}
-
-export function subscribe(fn) {
-  subscribers.add(fn);
-  return () => subscribers.delete(fn);
-}
-
-export const toast = {
-  success: (msg, d) => notify(msg, TYPES.SUCCESS, d),
-  error:   (msg, d) => notify(msg, TYPES.ERROR, d),
-  info:    (msg, d) => notify(msg, TYPES.INFO, d),
-  warning: (msg, d) => notify(msg, TYPES.WARNING, d),
-};
+export const toast = new NotificationQueue();
