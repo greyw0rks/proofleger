@@ -1,97 +1,97 @@
 "use client";
 import { useState } from "react";
-import { useVerify }     from "@/hooks/useVerify";
-import { useCeloVerify } from "@/hooks/useCeloVerify";
-import { useHash }       from "@/hooks/useHash";
-import VerifyResult      from "./VerifyResult";
-import CeloVerifyResult  from "./CeloVerifyResult";
-import MultiChainBadge   from "./MultiChainBadge";
-import Spinner           from "./Spinner";
+import { useVerify }      from "@/hooks/useVerify";
+import { useCeloVerify }  from "@/hooks/useCeloVerify";
+import { useHash }        from "@/hooks/useHash";
+import FileDropZone       from "./FileDropZone";
+import VerifyResult       from "./VerifyResult";
+import Spinner            from "./Spinner";
+import { isHexHash }      from "@/utils/hash";
 
 export default function VerifyForm() {
-  const [input, setInput] = useState("");
-  const [mode, setMode]   = useState("hash"); // "hash" | "file"
-  const stacksVerify = useVerify();
-  const celoVerify   = useCeloVerify();
-  const { hashFile, hash: fileHash, hashing } = useHash();
+  const [input,  setInput]  = useState("");
+  const [mode,   setMode]   = useState("paste"); // "paste" | "file"
+  const stacks = useVerify();
+  const celo   = useCeloVerify();
+  const { hashFile, hashing, progress } = useHash?.() || {};
 
-  const activeHash = mode === "file" ? fileHash : input.trim();
-  const loading    = stacksVerify.loading || celoVerify.loading;
+  const loading = stacks.loading || celo.loading || hashing;
 
-  async function handleVerify() {
-    if (!activeHash) return;
-    await Promise.all([
-      stacksVerify.verify(activeHash),
-      celoVerify.verify(activeHash),
-    ]);
+  async function handleVerify(hash) {
+    await Promise.all([stacks.verify(hash), celo.verify(hash)]);
+  }
+
+  async function handleInput(val) {
+    setInput(val);
+    if (isHexHash(val)) await handleVerify(val.replace(/^0x/i, ""));
+  }
+
+  function handleReset() {
+    setInput(""); stacks.reset(); celo.reset();
   }
 
   return (
-    <div style={{ maxWidth:600 }}>
-      <div style={{ display:"flex", gap:8, marginBottom:16 }}>
-        {["hash","file"].map(m => (
+    <div style={{ fontFamily: "Space Grotesk, sans-serif", color: "#f5f0e8" }}>
+      {/* Mode toggle */}
+      <div style={{ display: "flex", gap: 0, marginBottom: 20, borderBottom: "2px solid #111" }}>
+        {["paste", "file"].map(m => (
           <button key={m} onClick={() => setMode(m)}
-            style={{ border:`2px solid ${mode===m?"#F7931A":"#333"}`,
-              background:"transparent", color:mode===m?"#F7931A":"#555",
-              padding:"6px 16px", fontFamily:"Archivo Black, sans-serif",
-              fontSize:10, cursor:"pointer", letterSpacing:1 }}>
-            {m.toUpperCase()}
+            style={{ border: "none", borderBottom: mode === m ? "2px solid #F7931A" : "none",
+              background: "transparent", color: mode === m ? "#F7931A" : "#555",
+              fontFamily: "Archivo Black, sans-serif", fontSize: 10, padding: "8px 18px",
+              cursor: "pointer", letterSpacing: 1, marginBottom: -2 }}>
+            {m === "paste" ? "PASTE HASH" : "UPLOAD FILE"}
           </button>
         ))}
       </div>
-      {mode === "hash" ? (
-        <div style={{ display:"flex", gap:8, marginBottom:20 }}>
-          <input value={input} onChange={e => setInput(e.target.value)}
-            placeholder="SHA-256 hash (64 hex chars)..."
-            onKeyDown={e => e.key === "Enter" && handleVerify()}
-            style={{ flex:1, background:"transparent", border:"3px solid #333",
-              color:"#f5f0e8", padding:"12px 14px",
-              fontFamily:"Space Mono, monospace", fontSize:12, outline:"none" }} />
-          <button onClick={handleVerify} disabled={loading || !input.trim()}
-            style={{ background:"#F7931A", border:"3px solid #F7931A", color:"#000",
-              padding:"12px 20px", fontFamily:"Archivo Black, sans-serif",
-              fontSize:12, cursor:"pointer", flexShrink:0 }}>
-            {loading ? <Spinner size={16} color="#000" /> : "VERIFY"}
-          </button>
+
+      {mode === "paste" ? (
+        <div style={{ position: "relative" }}>
+          <input
+            value={input}
+            onChange={e => handleInput(e.target.value)}
+            placeholder="Paste SHA-256 hash (64 hex chars)..."
+            style={{ width: "100%", background: "#0a0a0a", border: "2px solid #222",
+              color: "#f5f0e8", fontFamily: "Space Mono, monospace", fontSize: 11,
+              padding: "12px 14px", outline: "none", boxSizing: "border-box",
+              letterSpacing: 0.5 }}
+          />
         </div>
       ) : (
-        <div style={{ marginBottom:20 }}>
-          <div onClick={() => document.getElementById("vf-file").click()}
-            style={{ border:"3px dashed #333", padding:32, textAlign:"center",
-              cursor:"pointer", marginBottom:8 }}>
-            <input id="vf-file" type="file" style={{ display:"none" }}
-              onChange={e => hashFile(e.target.files[0])} />
-            <div style={{ fontFamily:"Archivo Black, sans-serif",
-              fontSize:13, color:"#555" }}>
-              {hashing ? "HASHING..." : fileHash ? fileHash.slice(0,20)+"..." : "DROP FILE TO HASH AND VERIFY"}
-            </div>
-          </div>
-          {fileHash && (
-            <button onClick={handleVerify} disabled={loading}
-              style={{ width:"100%", background:"#F7931A", border:"3px solid #F7931A",
-                color:"#000", padding:12, fontFamily:"Archivo Black, sans-serif",
-                fontSize:12, cursor:"pointer" }}>
-              {loading ? "VERIFYING..." : "VERIFY THIS FILE"}
-            </button>
-          )}
+        <FileDropZone
+          onHash={async (hash) => { setInput(hash); await handleVerify(hash); }}
+        />
+      )}
+
+      {hashing && progress != null && (
+        <div style={{ fontFamily: "Space Mono, monospace", fontSize: 9,
+          color: "#F7931A", marginTop: 8 }}>
+          HASHING... {progress}%
         </div>
       )}
-      {(stacksVerify.result || celoVerify.result) && (
-        <div>
-          <div style={{ marginBottom:16 }}>
-            <MultiChainBadge
-              stacksVerified={stacksVerify.exists}
-              celoVerified={celoVerify.result?.exists === true}
-            />
-          </div>
-          {stacksVerify.result && (
-            <div style={{ marginBottom:12 }}>
-              <VerifyResult result={stacksVerify.result} hash={activeHash} />
-            </div>
+
+      {loading && !hashing && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16 }}>
+          <Spinner size={14} />
+          <span style={{ fontFamily: "Space Mono, monospace", fontSize: 9, color: "#555" }}>
+            CHECKING STACKS + CELO...
+          </span>
+        </div>
+      )}
+
+      {(stacks.result || celo.result) && !loading && (
+        <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+          {stacks.result && <VerifyResult result={stacks.result} />}
+          {celo.result && celo.result !== stacks.result && (
+            <VerifyResult result={celo.result} />
           )}
-          {celoVerify.result && (
-            <CeloVerifyResult result={celoVerify.result} hash={activeHash} />
-          )}
+          <button onClick={handleReset}
+            style={{ border: "2px solid #333", background: "transparent",
+              color: "#555", padding: "8px 16px", alignSelf: "flex-start",
+              fontFamily: "Archivo Black, sans-serif", fontSize: 9,
+              cursor: "pointer", letterSpacing: 1 }}>
+            ↺ VERIFY ANOTHER
+          </button>
         </div>
       )}
     </div>
