@@ -1,83 +1,83 @@
 "use client";
-import { useCallback, useState } from "react";
-import { useHash } from "@/hooks/useHash";
+import { useState, useRef, useCallback } from "react";
+import { hashFile } from "@/utils/hash";
+import { formatBytes } from "@/utils/format";
+import Spinner from "./Spinner";
 
 export default function FileDropZone({ onHash, onFile }) {
-  const { hash, hashing, progress, fileName, fileSize, hashFile, reset } = useHash();
-  const [dragging, setDragging] = useState(false);
+  const [dragging,  setDragging]  = useState(false);
+  const [hashing,   setHashing]   = useState(false);
+  const [progress,  setProgress]  = useState(0);
+  const [fileName,  setFileName]  = useState(null);
+  const [fileSize,  setFileSize]  = useState(null);
+  const [hash,      setHash]      = useState(null);
+  const inputRef = useRef(null);
 
-  const handle = useCallback(async (file) => {
+  const processFile = useCallback(async (file) => {
     if (!file) return;
-    const h = await hashFile(file);
-    if (h) { if (onHash) onHash(h); if (onFile) onFile(file); }
-  }, [hashFile, onHash, onFile]);
+    setFileName(file.name);
+    setFileSize(file.size);
+    setHashing(true); setProgress(0); setHash(null);
+    try {
+      const h = await hashFile(file, setProgress);
+      setHash(h);
+      onFile?.(file);
+      onHash?.(h);
+    } catch(e) {
+      console.error("Hash error:", e);
+    }
+    setHashing(false);
+  }, [onHash, onFile]);
 
-  const onDrop = useCallback(e => {
+  const onDrop = useCallback((e) => {
     e.preventDefault(); setDragging(false);
-    const f = e.dataTransfer.files[0];
-    if (f) handle(f);
-  }, [handle]);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  }, [processFile]);
+
+  const borderColor = dragging ? "#F7931A" : hash ? "#00ff88" : "#222";
 
   return (
-    <div>
-      <div
-        onDragOver={e => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-        onClick={() => document.getElementById("pl-file-input").click()}
-        style={{ border:`3px dashed ${dragging ? "#F7931A" : "#333"}`,
-          padding:40, textAlign:"center", cursor:"pointer",
-          background: dragging ? "rgba(247,147,26,0.05)" : "transparent",
-          transition:"all 0.15s", marginBottom:12 }}>
-        <input id="pl-file-input" type="file" style={{ display:"none" }}
-          onChange={e => { const f = e.target.files[0]; if (f) handle(f); }} />
-        {!hash && !hashing && (
-          <div>
-            <div style={{ fontSize:32, marginBottom:8 }}>📎</div>
-            <div style={{ fontFamily:"Archivo Black, sans-serif",
-              fontSize:13, color:"#555", letterSpacing:1 }}>
-              DROP FILE OR CLICK TO SELECT
-            </div>
-            <div style={{ fontFamily:"Space Mono, monospace",
-              fontSize:10, color:"#444", marginTop:6 }}>
-              Any file type · Hashed client-side · Never uploaded
-            </div>
+    <div
+      onClick={() => !hashing && inputRef.current?.click()}
+      onDragOver={e => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={onDrop}
+      style={{ border: `2px dashed ${borderColor}`, padding: "32px 24px",
+        textAlign: "center", cursor: hashing ? "default" : "pointer",
+        transition: "border-color 0.15s", background: dragging ? "#F7931A08" : "transparent" }}>
+      <input ref={inputRef} type="file" style={{ display: "none" }}
+        onChange={e => processFile(e.target.files?.[0])} />
+
+      {hashing ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <Spinner size={20} />
+          <div style={{ fontFamily: "Space Mono, monospace", fontSize: 9, color: "#F7931A" }}>
+            HASHING {progress}%
           </div>
-        )}
-        {hashing && (
-          <div>
-            <div style={{ fontFamily:"Archivo Black, sans-serif",
-              fontSize:13, color:"#F7931A", marginBottom:12 }}>HASHING...</div>
-            <div style={{ height:4, background:"#1a1a1a", width:"80%", margin:"0 auto" }}>
-              <div style={{ height:"100%", background:"#F7931A",
-                width:`${progress}%`, transition:"width 0.3s" }} />
-            </div>
-            <div style={{ fontFamily:"Space Mono, monospace",
-              fontSize:9, color:"#555", marginTop:6 }}>{progress}%</div>
+          <div style={{ width: "100%", height: 2, background: "#111" }}>
+            <div style={{ height: 2, background: "#F7931A",
+              width: `${progress}%`, transition: "width 0.1s" }} />
           </div>
-        )}
-        {hash && !hashing && (
-          <div>
-            <div style={{ fontFamily:"Archivo Black, sans-serif",
-              fontSize:12, color:"#f5f0e8", marginBottom:6 }}>
-              {fileName}
-            </div>
-            <div style={{ fontFamily:"Space Mono, monospace",
-              fontSize:9, color:"#555", marginBottom:8 }}>{fileSize}</div>
-            <div style={{ fontFamily:"Space Mono, monospace",
-              fontSize:9, color:"#F7931A", wordBreak:"break-all" }}>
-              {hash}
-            </div>
+        </div>
+      ) : hash ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+          <div style={{ fontFamily: "Archivo Black, sans-serif",
+            fontSize: 11, color: "#00ff88", letterSpacing: 2 }}>✓ FILE HASHED</div>
+          <div style={{ fontFamily: "Space Mono, monospace", fontSize: 9, color: "#555" }}>
+            {fileName} · {formatBytes(fileSize)}
           </div>
-        )}
-      </div>
-      {hash && (
-        <button onClick={e => { e.stopPropagation(); reset(); }}
-          style={{ border:"none", background:"transparent",
-            color:"#555", fontFamily:"Space Mono, monospace",
-            fontSize:10, cursor:"pointer" }}>
-          ✕ Remove file
-        </button>
+          <div style={{ fontFamily: "Space Mono, monospace", fontSize: 8, color: "#00ff88",
+            wordBreak: "break-all", maxWidth: 360 }}>{hash}</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+          <div style={{ fontFamily: "Archivo Black, sans-serif",
+            fontSize: 13, color: "#333", letterSpacing: 2 }}>DROP FILE HERE</div>
+          <div style={{ fontFamily: "Space Mono, monospace", fontSize: 9, color: "#2a2a2a" }}>
+            or click to browse — any file type
+          </div>
+        </div>
       )}
     </div>
   );
