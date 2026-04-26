@@ -1,11 +1,11 @@
 "use client";
 import { useIntersection } from "@/hooks/useIntersection";
 
-export default function LazySection({ children, placeholder = null, rootMargin = "200px" }) {
+export default function LazySection({ children, rootMargin = "200px", fallback = null }) {
   const { ref, hasBeenVisible } = useIntersection({ rootMargin });
   return (
     <div ref={ref}>
-      {hasBeenVisible ? children : (placeholder || <div style={{ minHeight:100 }} />)}
+      {hasBeenVisible ? children : fallback}
     </div>
   );
 }
