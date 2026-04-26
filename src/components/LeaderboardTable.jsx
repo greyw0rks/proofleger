@@ -1,46 +1,53 @@
 "use client";
-import { useLeaderboard } from "@/hooks/useLeaderboard";
-import { getRankLabel } from "@/lib/leaderboard-builder";
+import { useState, useEffect } from "react";
 import Spinner from "./Spinner";
 
-export default function LeaderboardTable({ limit = 10 }) {
-  const { entries, loading } = useLeaderboard(limit);
+const VERIFIER_API = process.env.NEXT_PUBLIC_VERIFIER_API || "";
 
-  if (loading) return <div style={{ padding:20 }}><Spinner /></div>;
+export default function LeaderboardTable({ limit = 10 }) {
+  const [rows,    setRows]    = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!VERIFIER_API) { setLoading(false); return; }
+    fetch(`${VERIFIER_API}/v2/leaderboard?limit=${limit}`)
+      .then(r => r.ok ? r.json() : { leaderboard: [] })
+      .then(d => { setRows(d.leaderboard || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [limit]);
+
+  if (loading) return <div style={{ padding: 24, textAlign: "center" }}><Spinner size={20} /></div>;
+  if (!rows.length) return null;
 
   return (
     <div>
-      {entries.map((e, i) => (
-        <div key={e.address} style={{ display:"flex", alignItems:"center", gap:16,
-          padding:"14px 0", borderBottom:"1px solid #1a1a1a" }}>
-          <div style={{ fontFamily:"Archivo Black, sans-serif", fontSize:18,
-            color:"#F7931A", minWidth:36, textAlign:"center" }}>
-            {getRankLabel(i + 1)}
-          </div>
-          <div style={{ flex:1 }}>
-            <a href={`/profile/${e.address}`}
-              style={{ fontFamily:"Space Mono, monospace", fontSize:11,
-                color:"#f5f0e8", textDecoration:"none" }}
-              onMouseOver={ev => ev.target.style.color="#F7931A"}
-              onMouseOut={ev => ev.target.style.color="#f5f0e8"}>
-              {e.address.slice(0,10)}...{e.address.slice(-6)}
-            </a>
-          </div>
-          <div style={{ display:"flex", gap:12, fontFamily:"Space Mono, monospace", fontSize:10 }}>
-            <span style={{ color:"#F7931A" }}>{e.anchors}A</span>
-            <span style={{ color:"#00ff88" }}>{e.attests}T</span>
-            <span style={{ color:"#a78bfa" }}>{e.mints}N</span>
-          </div>
-          <div style={{ fontFamily:"Archivo Black, sans-serif", fontSize:14,
-            color:"#f5f0e8", minWidth:48, textAlign:"right" }}>
-            {e.score}
+      <div style={{ fontFamily: "Archivo Black, sans-serif",
+        fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 12 }}>
+        TOP WALLETS
+      </div>
+      {rows.map((row, i) => (
+        <div key={row.address}
+          style={{ display: "flex", alignItems: "center", gap: 12,
+            borderBottom: "1px solid #0f0f0f", padding: "10px 0" }}>
+          <span style={{ fontFamily: "Archivo Black, sans-serif",
+            fontSize: 11, color: i < 3 ? "#F7931A" : "#333",
+            minWidth: 24 }}>#{i + 1}</span>
+          <span style={{ fontFamily: "Space Mono, monospace",
+            fontSize: 9, color: "#888", flex: 1 }}>
+            {row.address?.slice(0, 8)}...{row.address?.slice(-6)}
+          </span>
+          <div style={{ display: "flex", gap: 16 }}>
+            {[["A", row.anchors, "#F7931A"], ["T", row.attests, "#888"], ["S", row.score, "#00ff88"]].map(([k, v, c]) => (
+              <div key={k} style={{ textAlign: "right" }}>
+                <div style={{ fontFamily: "Archivo Black, sans-serif",
+                  fontSize: 11, color: c }}>{v ?? 0}</div>
+                <div style={{ fontFamily: "Space Mono, monospace",
+                  fontSize: 7, color: "#333" }}>{k}</div>
+              </div>
+            ))}
           </div>
         </div>
       ))}
-      <div style={{ fontFamily:"Space Mono, monospace", fontSize:9, color:"#444",
-        marginTop:12, textAlign:"right" }}>
-        A=Anchors · T=Attests · N=NFTs · Score = A×10 + T×5 + N×25
-      </div>
     </div>
   );
 }
