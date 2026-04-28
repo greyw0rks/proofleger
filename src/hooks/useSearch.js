@@ -1,29 +1,40 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useCallback } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 
-export function useSearch(items = [], keys = []) {
-  const [query, setQuery] = useState("");
-  const [filters, setFilters] = useState({});
+const VERIFIER_API = process.env.NEXT_PUBLIC_VERIFIER_API || "";
 
-  const results = useMemo(() => {
-    let out = [...items];
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      out = out.filter(item =>
-        keys.some(key => String(item[key] || "").toLowerCase().includes(q))
+export function useSearch() {
+  const [query,   setQuery]   = useState("");
+  const [results, setResults] = useState([]);
+  const [total,   setTotal]   = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [page,    setPage]    = useState(0);
+
+  const debounced = useDebounce(query, 350);
+
+  const search = useCallback(async (q, offset = 0) => {
+    if (!q || q.length < 2) { setResults([]); setTotal(0); return; }
+    setLoading(true);
+    try {
+      const res  = await fetch(
+        `${VERIFIER_API}/v2/search?q=${encodeURIComponent(q)}&offset=${offset}`
       );
-    }
-    Object.entries(filters).forEach(([key, val]) => {
-      if (val) out = out.filter(item => item[key] === val);
-    });
-    return out;
-  }, [items, query, filters, keys]);
+      if (!res.ok) return;
+      const data = await res.json();
+      setResults(data.results || []);
+      setTotal(data.total  || 0);
+    } catch {}
+    setLoading(false);
+  }, []);
+
+  useState(() => { search(debounced, page * 20); }, [debounced, page]);
 
   return {
     query, setQuery,
-    filters, setFilter: (k, v) => setFilters(f => ({ ...f, [k]: v })),
-    clearFilters: () => setFilters({}),
-    results,
-    count: results.length,
+    results, total, loading,
+    page, setPage,
+    totalPages: Math.ceil(total / 20),
+    clear: () => { setQuery(""); setResults([]); setTotal(0); setPage(0); },
   };
 }
