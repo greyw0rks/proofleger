@@ -1,18 +1,31 @@
 "use client";
-import { useState, useEffect } from "react";
-import { buildLeaderboard } from "@/lib/leaderboard-builder";
-import { cacheWrap } from "@/lib/cache";
+import { useState, useEffect, useCallback } from "react";
 
-export function useLeaderboard(limit = 20) {
-  const [entries, setEntries] = useState([]);
+const VERIFIER_API = process.env.NEXT_PUBLIC_VERIFIER_API || "";
+
+export function useLeaderboard(type = "anchors", limit = 10) {
+  const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
 
-  useEffect(() => {
-    cacheWrap(`leaderboard:${limit}`, () => buildLeaderboard(limit), 300_000)
-      .then(setEntries)
-      .catch(() => setEntries([]))
-      .finally(() => setLoading(false));
-  }, [limit]);
+  const path = type === "reputation"
+    ? `/v2/leaderboard/reputation?limit=${limit}`
+    : type === "staking"
+    ? `/v2/leaderboard/staking?limit=${limit}`
+    : `/v2/leaderboard?limit=${limit}`;
 
-  return { entries, loading };
+  const fetch_ = useCallback(async () => {
+    if (!VERIFIER_API) { setLoading(false); return; }
+    try {
+      const res  = await fetch(VERIFIER_API + path);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setData(await res.json());
+    } catch(e) { setError(e.message); }
+    finally    { setLoading(false); }
+  }, [path]);
+
+  useEffect(() => { fetch_(); }, [fetch_]);
+
+  return { data, loading, error, refresh: fetch_,
+    entries: data?.leaderboard ?? [] };
 }
