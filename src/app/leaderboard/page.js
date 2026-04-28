@@ -1,43 +1,42 @@
 "use client";
 import { useState } from "react";
 import LeaderboardTable from "@/components/LeaderboardTable";
-import { useRecentActivity } from "@/hooks/useRecentActivity";
+import StatsStrip       from "@/components/StatsStrip";
+
+const TABS = [
+  { key: "anchors",    label: "ANCHORS"    },
+  { key: "reputation", label: "REPUTATION" },
+  { key: "staking",    label: "STAKING"    },
+];
 
 export default function LeaderboardPage() {
-  const [limit, setLimit] = useState(20);
-  const { activity } = useRecentActivity(5);
+  const [tab, setTab] = useState("anchors");
+
   return (
-    <div style={{ maxWidth:720, margin:"0 auto", padding:"40px 24px",
-      fontFamily:"Space Grotesk, sans-serif", color:"#f5f0e8",
-      minHeight:"100vh", background:"#0a0a0a" }}>
-      <div style={{ display:"flex", justifyContent:"space-between",
-        alignItems:"flex-end", marginBottom:32 }}>
-        <div>
-          <h1 style={{ fontFamily:"Archivo Black, sans-serif", fontSize:28, marginBottom:4 }}>
-            LEADERBOARD
-          </h1>
-          <p style={{ color:"#888", fontSize:13 }}>Top ProofLedger contributors</p>
+    <div style={{ fontFamily: "Space Grotesk, sans-serif",
+      color: "#f5f0e8", minHeight: "100vh", background: "#0a0a0a" }}>
+      <StatsStrip />
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 24px" }}>
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ fontFamily: "Archivo Black, sans-serif",
+            fontSize: 26, marginBottom: 4 }}>LEADERBOARD</h1>
+          <p style={{ color: "#888", fontSize: 13 }}>Top ProofLedger participants</p>
         </div>
-        <select value={limit} onChange={e => setLimit(Number(e.target.value))}
-          style={{ background:"#0a0a0a", border:"2px solid #333", color:"#888",
-            padding:"6px 12px", fontFamily:"Archivo Black, sans-serif",
-            fontSize:10, cursor:"pointer" }}>
-          {[10,20,50].map(n => (
-            <option key={n} value={n}>TOP {n}</option>
+        <div style={{ display: "flex", borderBottom: "2px solid #111", marginBottom: 24 }}>
+          {TABS.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              style={{ border: "none", background: "transparent",
+                borderBottom: tab === t.key ? "2px solid #F7931A" : "2px solid transparent",
+                color: tab === t.key ? "#F7931A" : "#555",
+                fontFamily: "Archivo Black, sans-serif", fontSize: 10,
+                padding: "8px 18px", cursor: "pointer",
+                letterSpacing: 1, marginBottom: -2 }}>
+              {t.label}
+            </button>
           ))}
-        </select>
-      </div>
-      <div style={{ marginBottom:32 }}>
-        <div style={{ fontFamily:"Archivo Black, sans-serif", fontSize:10,
-          color:"#555", marginBottom:12, letterSpacing:2 }}>SCORING</div>
-        <div style={{ display:"flex", gap:16, fontFamily:"Space Mono, monospace",
-          fontSize:10, color:"#666" }}>
-          <span style={{ color:"#F7931A" }}>ANCHOR × 10</span>
-          <span style={{ color:"#00ff88" }}>ATTEST × 5</span>
-          <span style={{ color:"#a78bfa" }}>NFT × 25</span>
         </div>
+        <LeaderboardTable key={tab} limit={20} />
       </div>
-      <LeaderboardTable limit={limit} />
     </div>
   );
 }
