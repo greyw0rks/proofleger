@@ -1,33 +1,37 @@
-export function isCeloAddress(addr) {
-  return typeof addr === "string" && /^0x[0-9a-fA-F]{40}$/.test(addr);
+/**
+ * ProofLedger Celo chain utilities
+ */
+
+export const CELO_CHAIN_ID = 42220;
+export const CELO_RPC      = "https://feth.celo.org";
+export const CELO_EXPLORER = "https://celoscan.io";
+
+export const celoChain = {
+  id:   CELO_CHAIN_ID,
+  name: "Celo",
+  network: "celo",
+  nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
+  rpcUrls: { default: { http: [CELO_RPC] } },
+  blockExplorers: { default: { name: "CeloScan", url: CELO_EXPLORER } },
+};
+
+export function celoTxUrl(txHash) {
+  return `${CELO_EXPLORER}/tx/${txHash}`;
 }
 
-export function celoExplorerTx(txHash) {
-  return `https://celoscan.io/tx/${txHash}`;
+export function celoAddressUrl(address) {
+  return `${CELO_EXPLORER}/address/${address}`;
 }
 
-export function celoExplorerAddress(addr) {
-  return `https://celoscan.io/address/${addr}`;
+export function celoBlockUrl(blockNumber) {
+  return `${CELO_EXPLORER}/block/${blockNumber}`;
 }
 
-export function celoExplorerBlock(blockNum) {
-  return `https://celoscan.io/block/${blockNum}`;
+export function isValidCeloAddress(address) {
+  return /^0x[0-9a-fA-F]{40}$/.test(address);
 }
 
-export function shortenCeloTx(hash, chars = 8) {
-  if (!hash) return "";
-  return `${hash.slice(0, chars)}...${hash.slice(-6)}`;
-}
-
-export function formatCeloAmount(wei) {
-  // wei is BigInt from viem
-  const n = typeof wei === "bigint" ? Number(wei) : Number(wei);
-  return (n / 1e18).toFixed(6) + " CELO";
-}
-
-export function celoBlockToDate(blockNum, currentBlock, currentDate = new Date()) {
-  // Celo ~5s per block
-  const diffBlocks = Number(blockNum) - currentBlock;
-  const diffMs = diffBlocks * 5000;
-  return new Date(currentDate.getTime() + diffMs);
+export function shortCeloAddress(address, head = 6, tail = 4) {
+  if (!address || address.length <= head + tail + 3) return address;
+  return `${address.slice(0, head)}...${address.slice(-tail)}`;
 }
