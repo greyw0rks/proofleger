@@ -1,39 +1,45 @@
 "use client";
-import { useNetworkContext, NETWORKS } from "@/context/NetworkContext";
-
-const CHAIN_DESC = {
-  stacks: "Anchored to Bitcoin via Stacks. Permanent & censorship-resistant.",
-  celo:   "Sub-cent fees via Celo. Ideal for high-volume document anchoring.",
-};
+import { useNetworkSwitch } from "@/hooks/useNetworkSwitch";
+import ChainIcon from "./ChainIcon";
 
 export default function ChainSelector() {
-  const { network, switchNetwork } = useNetworkContext();
+  const { network, networks, switchTo } = useNetworkSwitch();
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-      {Object.values(NETWORKS).map(net => {
-        const active = network.id === net.id;
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {networks.map(n => {
+        const active = n.id === network?.id;
+        const color  = n.id === "celo" ? "#FCFF52" : "#F7931A";
         return (
-          <div key={net.id} onClick={() => switchNetwork(net.id)}
-            style={{ border:`3px solid ${active ? net.color : "#222"}`,
-              padding:16, cursor:"pointer",
-              boxShadow: active ? `4px 4px 0 ${net.color}` : "none",
-              transition:"all 0.15s" }}>
-            <div style={{ display:"flex", justifyContent:"space-between",
-              alignItems:"center", marginBottom:6 }}>
-              <div style={{ fontFamily:"Archivo Black, sans-serif", fontSize:14,
-                color: active ? net.color : "#888" }}>
-                {net.label.toUpperCase()}
+          <label key={n.id}
+            style={{ display: "flex", alignItems: "center", gap: 10,
+              cursor: "pointer", padding: "10px 14px",
+              border: `2px solid ${active ? color : "#1a1a1a"}`,
+              background: active ? `${color}08` : "transparent",
+              transition: "all 0.1s" }}>
+            <input type="radio" name="chain" value={n.id}
+              checked={active} onChange={() => switchTo(n.id)}
+              style={{ display: "none" }} />
+            <ChainIcon chain={n.id} size={16} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "Archivo Black, sans-serif",
+                fontSize: 11, color: active ? color : "#888",
+                letterSpacing: 1 }}>
+                {n.label?.toUpperCase()}
               </div>
-              <div style={{ width:14, height:14, borderRadius:"50%",
-                border:`3px solid ${active ? net.color : "#444"}`,
-                background: active ? net.color : "transparent" }} />
+              <div style={{ fontFamily: "Space Mono, monospace",
+                fontSize: 8, color: "#444", marginTop: 1 }}>
+                {n.id === "stacks" ? "Bitcoin L2 · ~10min" : "EVM · ~5sec"}
+              </div>
             </div>
-            <div style={{ fontFamily:"Space Grotesk, sans-serif", fontSize:11,
-              color:"#555" }}>
-              {CHAIN_DESC[net.id]}
-            </div>
-          </div>
+            {active && (
+              <span style={{ fontFamily: "Archivo Black, sans-serif",
+                fontSize: 7, color, letterSpacing: 1,
+                border: `1px solid ${color}44`, padding: "2px 6px" }}>
+                SELECTED
+              </span>
+            )}
+          </label>
         );
       })}
     </div>
