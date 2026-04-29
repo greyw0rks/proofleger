@@ -1,26 +1,41 @@
 "use client";
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import { CACHE_KEYS } from "@/lib/constants";
+
+const NETWORKS = [
+  { id: "stacks", label: "Stacks", chainId: null },
+  { id: "celo",   label: "Celo",   chainId: 42220 },
+];
 
 const NetworkContext = createContext(null);
 
-export const NETWORKS = {
-  STACKS: { id: "stacks", label: "Stacks", color: "#F7931A", chain: "mainnet" },
-  CELO:   { id: "celo",   label: "Celo",   color: "#35D07F", chain: "celo-mainnet" },
-};
-
 export function NetworkProvider({ children }) {
-  const [network, setNetwork] = useState(NETWORKS.STACKS);
+  const [network, setNetworkState] = useState(NETWORKS[0]);
 
-  const switchNetwork = useCallback((id) => {
-    const n = Object.values(NETWORKS).find(n => n.id === id);
-    if (n) setNetwork(n);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CACHE_KEYS.networkPref);
+      if (saved) {
+        const found = NETWORKS.find(n => n.id === saved);
+        if (found) setNetworkState(found);
+      }
+    } catch {}
   }, []);
 
+  function setNetwork(n) {
+    setNetworkState(n);
+    try { localStorage.setItem(CACHE_KEYS.networkPref, n.id); } catch {}
+  }
+
   return (
-    <NetworkContext.Provider value={{ network, switchNetwork, isStacks: network.id === "stacks", isCelo: network.id === "celo" }}>
+    <NetworkContext.Provider value={{ network, setNetwork, networks: NETWORKS }}>
       {children}
     </NetworkContext.Provider>
   );
 }
 
-export const useNetworkContext = () => useContext(NetworkContext);
+export function useNetworkContext() {
+  const ctx = useContext(NetworkContext);
+  if (!ctx) throw new Error("useNetworkContext must be used inside NetworkProvider");
+  return ctx;
+}
