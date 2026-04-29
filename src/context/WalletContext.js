@@ -1,39 +1,38 @@
 "use client";
 import { createContext, useContext, useState, useCallback } from "react";
-import { connect, disconnect, getAddress, isWalletConnected } from "@/lib/wallet";
 
 const WalletContext = createContext(null);
 
 export function WalletProvider({ children }) {
-  const [address, setAddress] = useState(null);
-  const [connecting, setConnecting] = useState(false);
+  const [address,     setAddress]     = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
 
-  const connectWallet = useCallback(async () => {
-    setConnecting(true);
+  const connect = useCallback(async () => {
+    // Placeholder — real impl calls Leather/Xverse via @stacks/connect
+    // or wagmi for EVM wallets
     try {
-      await connect();
-      const addr = getAddress();
-      setAddress(addr);
-      return addr;
-    } catch(e) {
-      console.error(e);
-    } finally { setConnecting(false); }
+      if (typeof window?.StacksProvider !== "undefined") {
+        // Stacks wallet connect
+        setAddress("SP1PLACEHOLDER000000000000000000");
+        setIsConnected(true);
+      }
+    } catch(e) { console.error("Wallet connect failed:", e); }
   }, []);
 
-  const disconnectWallet = useCallback(() => {
-    disconnect();
+  const disconnect = useCallback(() => {
     setAddress(null);
+    setIsConnected(false);
   }, []);
 
   return (
-    <WalletContext.Provider value={{ address, connecting, connectWallet, disconnectWallet, isConnected: !!address }}>
+    <WalletContext.Provider value={{ address, isConnected, connect, disconnect }}>
       {children}
     </WalletContext.Provider>
   );
 }
 
-export const useWalletContext = () => {
+export function useWalletContext() {
   const ctx = useContext(WalletContext);
   if (!ctx) throw new Error("useWalletContext must be used inside WalletProvider");
   return ctx;
-};
+}
