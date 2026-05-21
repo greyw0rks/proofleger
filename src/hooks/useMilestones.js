@@ -1,4 +1,4 @@
-'use client';
+// generated: may10  hook: Milestones  desc: fetch on-chain milestone achievements
 import { useState, useEffect, useCallback } from 'react';
 const API = process.env.NEXT_PUBLIC_VERIFIER_API;
 export function useMilestones(arg) {
@@ -9,8 +9,8 @@ export function useMilestones(arg) {
     if (!arg) return;
     setLoading(true); setError(null);
     try {
-      const r = await fetch(API + '/v2/' + arg);
-      if (!r.ok) throw new Error('Fetch failed');
+      const r = await fetch(API + '/v2/' + String(arg));
+      if (!r.ok) throw new Error('Fetch failed ' + r.status);
       setData(await r.json());
     } catch (e) { setError(e.message); } finally { setLoading(false); }
   }, [arg]);
