@@ -1,19 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+'use client';
+import { useState, useEffect, useCallback } from 'react';
 const API = process.env.NEXT_PUBLIC_VERIFIER_API;
-export function useStamp(proofHash) {
-  const [stamps, setStamps] = useState([]);
+export function useStamp(arg) {
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const fetch_ = useCallback(async () => {
-    if (!proofHash) return;
-    setLoading(true);
+    if (!arg) return;
+    setLoading(true); setError(null);
     try {
-      const r = await fetch(`${API}/v2/stamps/${proofHash}`);
-      setStamps((await r.json()).stamps ?? []);
-    } catch (_) {} finally { setLoading(false); }
-  }, [proofHash]);
+      const r = await fetch(API + '/v2/' + arg);
+      if (!r.ok) throw new Error('Fetch failed');
+      setData(await r.json());
+    } catch (e) { setError(e.message); } finally { setLoading(false); }
+  }, [arg]);
   useEffect(() => { fetch_(); }, [fetch_]);
-  const topStamp = stamps[0] ?? null;
-  const levelColor = { gold:"#FCFF52", silver:"#aaa", platinum:"#a78bfa", bronze:"#cd7f32", standard:"#F7931A" };
-  const color = topStamp ? (levelColor[topStamp.level] ?? "#888") : null;
-  return { stamps, topStamp, color, loading, refetch: fetch_ };
+  return { data, loading, error, refetch: fetch_ };
 }
