@@ -1,16 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+'use client';
+import { useState, useEffect, useCallback } from 'react';
 const API = process.env.NEXT_PUBLIC_VERIFIER_API;
-export function useReferrals(address) {
-  const [stats, setStats] = useState(null);
+export function useReferrals(arg) {
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const fetch_ = useCallback(async () => {
-    if (!address) return;
-    setLoading(true);
+    if (!arg) return;
+    setLoading(true); setError(null);
     try {
-      const r = await fetch(`${API}/v2/referrals/${address}`);
-      setStats(await r.json());
-    } catch (_) {} finally { setLoading(false); }
-  }, [address]);
+      const r = await fetch(API + '/v2/' + arg);
+      if (!r.ok) throw new Error('Fetch failed');
+      setData(await r.json());
+    } catch (e) { setError(e.message); } finally { setLoading(false); }
+  }, [arg]);
   useEffect(() => { fetch_(); }, [fetch_]);
-  return { stats, loading, refetch: fetch_ };
+  return { data, loading, error, refetch: fetch_ };
 }
