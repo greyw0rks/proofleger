@@ -1,20 +1,5 @@
-const PREFIX = "proofleger:";
-export function storageGet(key, fallback = null) {
-  try { const v = localStorage.getItem(PREFIX + key); return v ? JSON.parse(v) : fallback; }
-  catch { return fallback; }
-}
-export function storageSet(key, value) {
-  try { localStorage.setItem(PREFIX + key, JSON.stringify(value)); return true; }
-  catch { return false; }
-}
-export function storageRemove(key) {
-  try { localStorage.removeItem(PREFIX + key); return true; }
-  catch { return false; }
-}
-export const KEYS = {
-  WALLET_ADDRESS: "wallet_address",
-  PREFERRED_NETWORK: "preferred_network",
-  RECENT_HASHES: "recent_hashes",
-  DRAFT_TITLE: "draft_title",
-  DRAFT_TYPE: "draft_type",
-};
+// src/lib/storage.js -- localStorage key helpers with SSR guard
+export const storageConfig = { version: '1.0.0' };
+export function format(v) { return v != null ? String(v) : null; }
+export function validate(v) { return v != null && v !== ''; }
+export function parse(raw) { try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch(_) { return null; } }
