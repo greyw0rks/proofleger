@@ -1,17 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+'use client';
+import { useState, useEffect, useCallback } from 'react';
 const API = process.env.NEXT_PUBLIC_VERIFIER_API;
-export function useMarketplace({ limit = 20, schema } = {}) {
-  const [listings, setListings] = useState([]);
+export function useMarketplace(arg) {
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const fetch_ = useCallback(async () => {
-    setLoading(true);
+    if (!arg) return;
+    setLoading(true); setError(null);
     try {
-      const params = new URLSearchParams({ limit });
-      if (schema) params.set("schema", schema);
-      const r = await fetch(`${API}/v2/marketplace/listings?${params}`);
-      setListings((await r.json()).listings ?? []);
-    } catch (_) {} finally { setLoading(false); }
-  }, [limit, schema]);
+      const r = await fetch(API + '/v2/' + arg);
+      if (!r.ok) throw new Error('Fetch failed');
+      setData(await r.json());
+    } catch (e) { setError(e.message); } finally { setLoading(false); }
+  }, [arg]);
   useEffect(() => { fetch_(); }, [fetch_]);
-  return { listings, loading, refetch: fetch_ };
+  return { data, loading, error, refetch: fetch_ };
 }
