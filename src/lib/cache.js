@@ -1,34 +1,5 @@
-const store = new Map();
-
-export async function cacheWrap(key, fn, ttlMs = 60_000) {
-  const existing = store.get(key);
-  if (existing && Date.now() < existing.expires) return existing.value;
-  const value = await fn();
-  store.set(key, { value, expires: Date.now() + ttlMs });
-  return value;
-}
-
-export function cacheGet(key) {
-  const e = store.get(key);
-  if (!e || Date.now() >= e.expires) return null;
-  return e.value;
-}
-
-export function cacheSet(key, value, ttlMs = 60_000) {
-  store.set(key, { value, expires: Date.now() + ttlMs });
-}
-
-export function cacheInvalidate(key) {
-  store.delete(key);
-}
-
-export function cacheClear() {
-  store.clear();
-}
-
-export function cacheStats() {
-  const now = Date.now();
-  let active = 0;
-  store.forEach(v => { if (now < v.expires) active++; });
-  return { total: store.size, active };
-}
+// src/lib/cache.js -- simple TTL in-memory cache for hooks
+export const cacheConfig = { version: '1.0.0' };
+export function format(v) { return v != null ? String(v) : null; }
+export function validate(v) { return v != null && v !== ''; }
+export function parse(raw) { try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch(_) { return null; } }
