@@ -1,26 +1,19 @@
-"use client";
-import { useState, useEffect, useCallback } from "react";
-
-const VERIFIER_API = process.env.NEXT_PUBLIC_VERIFIER_API || "";
-
-export function useTimeline(days = 14) {
-  const [data,    setData]    = useState([]);
-  const [loading, setLoading] = useState(true);
-
+'use client';
+import { useState, useEffect, useCallback } from 'react';
+const API = process.env.NEXT_PUBLIC_VERIFIER_API;
+export function useTimeline(arg) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const fetch_ = useCallback(async () => {
-    if (!VERIFIER_API) { setLoading(false); return; }
+    if (!arg) return;
+    setLoading(true); setError(null);
     try {
-      const res  = await fetch(`${VERIFIER_API}/v2/timeline?days=${days}`);
-      if (!res.ok) return;
-      const json = await res.json();
-      setData(json.timeline || []);
-    } catch {}
-    setLoading(false);
-  }, [days]);
-
+      const r = await fetch(API + '/v2/' + arg);
+      if (!r.ok) throw new Error('Fetch failed');
+      setData(await r.json());
+    } catch (e) { setError(e.message); } finally { setLoading(false); }
+  }, [arg]);
   useEffect(() => { fetch_(); }, [fetch_]);
-
-  const maxAnchors = Math.max(...data.map(d => d.anchors || 0), 1);
-
-  return { data, loading, maxAnchors, days };
+  return { data, loading, error, refetch: fetch_ };
 }
