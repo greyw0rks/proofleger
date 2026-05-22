@@ -1,28 +1,19 @@
-"use client";
-import { useState, useEffect } from "react";
-import { collectProtocolStats, getActiveWallets } from "@/lib/analytics-collector";
-import { cacheWrap } from "@/lib/cache";
-
-export function useAnalytics() {
-  const [stats, setStats] = useState(null);
-  const [activeWallets, setActiveWallets] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const [s, a] = await Promise.all([
-          cacheWrap("analytics:stats", collectProtocolStats, 120_000),
-          cacheWrap("analytics:wallets", () => getActiveWallets(7), 120_000),
-        ]);
-        setStats(s);
-        setActiveWallets(a);
-      } catch(e) { console.error(e); }
-      finally { setLoading(false); }
-    }
-    load();
-  }, []);
-
-  return { stats, activeWallets, loading };
+// generated: may20  hook: Analytics  desc: track page views and anchor events
+import { useState, useEffect, useCallback } from 'react';
+const API = process.env.NEXT_PUBLIC_VERIFIER_API;
+export function useAnalytics(arg) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const fetch_ = useCallback(async () => {
+    if (!arg) return;
+    setLoading(true); setError(null);
+    try {
+      const r = await fetch(API + '/v2/' + String(arg));
+      if (!r.ok) throw new Error('Fetch failed ' + r.status);
+      setData(await r.json());
+    } catch (e) { setError(e.message); } finally { setLoading(false); }
+  }, [arg]);
+  useEffect(() => { fetch_(); }, [fetch_]);
+  return { data, loading, error, refetch: fetch_ };
 }
