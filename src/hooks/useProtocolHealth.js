@@ -1,4 +1,5 @@
-// generated: may10  hook: ProtocolHealth  desc: poll verifier health and uptime stats
+// generated: jun5  hook: ProtocolHealth
+// fetch real-time protocol health status
 import { useState, useEffect, useCallback } from 'react';
 const API = process.env.NEXT_PUBLIC_VERIFIER_API;
 export function useProtocolHealth(arg) {
