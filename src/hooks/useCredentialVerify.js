@@ -1,24 +1,20 @@
-"use client";
-import { useState, useCallback } from "react";
-import { verifyCredentialFull } from "@/lib/credential-verifier";
-
-export function useCredentialVerify() {
-  const [result, setResult] = useState(null);
+// generated: jun8  hook: CredentialVerify
+// verify credential authenticity on-chain
+import { useState, useEffect, useCallback } from 'react';
+const API = process.env.NEXT_PUBLIC_VERIFIER_API;
+export function useCredentialVerify(arg) {
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const verify = useCallback(async (hash) => {
-    if (!hash) return;
-    setLoading(true); setError(null); setResult(null);
+  const fetch_ = useCallback(async () => {
+    if (!arg) return;
+    setLoading(true); setError(null);
     try {
-      const r = await verifyCredentialFull(hash);
-      setResult(r);
-      return r;
-    } catch(e) { setError(e.message); }
-    finally { setLoading(false); }
-  }, []);
-
-  return { verify, result, loading, error,
-    isVerified: result?.exists && !result?.revoked,
-    isRevoked: result?.revoked };
+      const r = await fetch(API + '/v2/' + String(arg));
+      if (!r.ok) throw new Error('Fetch failed ' + r.status);
+      setData(await r.json());
+    } catch (e) { setError(e.message); } finally { setLoading(false); }
+  }, [arg]);
+  useEffect(() => { fetch_(); }, [fetch_]);
+  return { data, loading, error, refetch: fetch_ };
 }
