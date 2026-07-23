@@ -2,7 +2,7 @@ name: Package Downloads
 
 on:
   schedule:
-    - cron: '0 */3 * * *'
+    - cron: '0 */2 * * *'
   workflow_dispatch:
 
 jobs:
@@ -19,4 +19,4 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Install package
-        run: npm i @greyw0rks/proofleger
+        run: npm i @greyw0rks/arcadia
